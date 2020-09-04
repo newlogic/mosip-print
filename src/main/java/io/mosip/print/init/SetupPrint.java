@@ -1,5 +1,6 @@
 package io.mosip.print.init;
 
+import io.mosip.kernel.websub.api.client.SubscriberClientImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -15,11 +16,14 @@ import io.mosip.kernel.websub.api.model.UnsubscriptionRequest;
 public class SetupPrint 
 implements ApplicationListener<ApplicationReadyEvent> {
 
-    @Autowired
-  SubscriptionClient<SubscriptionChangeRequest,UnsubscriptionRequest, SubscriptionChangeResponse> sb; 
+  @Autowired
+  SubscriptionClient<SubscriptionChangeRequest, UnsubscriptionRequest, SubscriptionChangeResponse> sb;
   @Value("${mosip.event.hubURL}")
   private String hubURL;
-  
+
+  @Value("${mosip.event.callbackURL}")
+  private String callbackURL;
+
   @Value("${mosip.event.topic}")
   private String topic;
 
@@ -32,12 +36,20 @@ implements ApplicationListener<ApplicationReadyEvent> {
   @Override
   public void onApplicationEvent(final ApplicationReadyEvent event) {
     
+    System.out.println("*** hubURL = " + hubURL + " ***");
+    System.out.println("*** callbackURL = " + callbackURL + " ***");
+    System.out.println("*** topic = " + topic + " ***");
+    System.out.println("*** secret = " + secret + " ***");
+
     SubscriptionChangeRequest subscriptionChangeRequest = new SubscriptionChangeRequest();
+
     subscriptionChangeRequest.setHubURL(hubURL);
+    subscriptionChangeRequest.setCallbackURL(callbackURL);
     subscriptionChangeRequest.setTopic(topic);
     subscriptionChangeRequest.setSecret(secret);
     //subscriptionChangeRequest.setLeaseSeconds(leaseSeconds);
-	  sb.subscribe(subscriptionChangeRequest);
+
+    // sb.subscribe(subscriptionChangeRequest);
     return;
   }
 }
