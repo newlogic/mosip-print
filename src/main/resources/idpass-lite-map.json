@@ -1,0 +1,39 @@
+{
+        "lang": ["eng", "fra"],
+		"UIN": {
+			"value": "UIN",
+			"isMandatory" : true
+		},
+		"gender": {
+			"value": "gender",
+			"isMandatory" : false
+		},
+		"photo": {
+			"value": "photo",
+			"isMandatory" : false
+		},
+		"givenName": {
+			"value": "fullName",
+			"isMandatory" : true
+		},
+		"surName": {
+			"value": "fullName",
+			"isMandatory" : true
+		},
+		"placeOfBirth": {
+			"value": "placeOfBirth",
+			"isMandatory" : true
+		},
+		"dateOfBirth": {
+			"value": "dateOfBirth",
+			"isMandatory" : true
+		},
+		"pin": {
+			"value": "pin",
+			"isMandatory" : true
+		},
+		"address": {
+			"value": "addressLine1,addressLine2,addressLine3,region,province,postalCode",
+			"isMandatory" : false 
+		}
+}
