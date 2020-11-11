@@ -19,11 +19,22 @@ import java.time.format.DateTimeFormatter;
 
 import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
 
+/**
+ * Spring boot singleton component execution wrapper of
+ * an IDPassReader instance
+ */
+
 @Component
 public class IDPassReaderComponent
 {
     public IDPassReader reader;
 
+    /**
+     * Instantiates IDPassReader reader with a particular configuration
+     *
+     * @throws IDPassException Standard exception
+     * @throws IOException Standard exception
+     */
     public IDPassReaderComponent()
             throws IDPassException, IOException
     {
@@ -34,8 +45,18 @@ public class IDPassReaderComponent
                 IDPassReader.DETAIL_PLACEOFBIRTH);
     }
 
+    /**
+     * Returns a PNG image QR code representation as a byte[] array,
+     * from the given inputs:
+     *
+     * @param cs The credential subject input json
+     * @param pincode The IDPASS LITE pin code
+     * @param photob64 A facial photo image
+     * @return Returns PNG QR code of the generated IDPASS LITE card
+     */
     public byte[] generateQrCode(String cs, String pincode, String photob64)
     {
+        // Parse credential subject input json to populate fields in IdentFields object
         IdentFields idf = IdentFields.getInstance(cs);
 
         Ident.Builder identBuilder = Ident.newBuilder()
@@ -43,7 +64,7 @@ public class IDPassReaderComponent
 
         String imageType = photob64.split(",")[0];
         byte[] photo = CryptoUtil.decodeBase64(photob64.split(",")[1]);
-        photo = convertToJPG(photo);
+        photo = convertJ2KToJPG(photo);
 
         if (photo != null) {
             identBuilder.setPhoto(ByteString.copyFrom(photo));
@@ -58,6 +79,8 @@ public class IDPassReaderComponent
         dateOfBirth
         address
         */
+
+        /* Populate Ident fields from idf object */
 
         String dobStr = idf.getDateOfBirth();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d");
@@ -94,7 +117,7 @@ public class IDPassReaderComponent
     }
 
     // Notes: copied from 'mosip-functional-tests' repo
-    private static byte[] convertToJPG(byte[] jp2Data) {
+    private static byte[] convertJ2KToJPG(byte[] jp2Data) {
         byte[] jpgImg = null;
         J2KImageReader j2kImageReader = new J2KImageReader(null);
         try {

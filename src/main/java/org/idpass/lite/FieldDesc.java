@@ -13,6 +13,24 @@ public class FieldDesc {
 
     // addressLine1,addressLine2,addressLine3,region,province,postalCode
 
+    /**
+     * This method reads in a particular json node of the input json
+     * and uses this field's defined "value" and "isMandatory" definitions
+     * to do the extraction.
+     *
+     * Certain fields such as id, UIN and dateOfBirth are well defined and
+     * therefore they are read as-is. However, other fields may have comma-separated
+     * source field definitions and therefore needs to parsed and contents
+     * aggregated. For example, the "address" field.
+     *
+     * This method only extracts field values corresponding to the preferred language
+     * defined in IDPassMap.lang.
+     *
+     * @param jnode
+     * @return Returns the plain field value corresponding to preferred language
+     * @throws IOException Throws exception if a mandatory field is not found
+     */
+
     public String from(JsonNode jnode)
             throws IOException
     {
@@ -52,6 +70,8 @@ public class FieldDesc {
 
         return ret;
     }
+
+    /* Auto-generated getters/setters and constructors */
 
     public FieldDesc() {
     }

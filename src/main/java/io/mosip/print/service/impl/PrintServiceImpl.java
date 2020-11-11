@@ -41,12 +41,10 @@ import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.pdfgenerator.exception.PDFGeneratorException;
 import io.mosip.kernel.core.qrcodegenerator.exception.QrcodeGenerationException;
-import io.mosip.kernel.core.qrcodegenerator.spi.QrCodeGenerator;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.kernel.core.websub.spi.PublisherClient;
 import io.mosip.kernel.pdfgenerator.itext.constant.PDFGeneratorExceptionCodeConstant;
-import io.mosip.kernel.qrcode.generator.zxing.constant.QrVersion;
 import io.mosip.print.constant.ApiName;
 import io.mosip.print.constant.CardType;
 import io.mosip.print.constant.EventId;
@@ -170,10 +168,6 @@ public class PrintServiceImpl implements PrintService{
 	// RegistrationStatusService<String, InternalRegistrationStatusDto,
 	// RegistrationStatusDto> registrationStatusService;
 
-	/** The qr code generator. */
-	@Autowired
-	private QrCodeGenerator<QrVersion> qrCodeGenerator;
-
 	/** The Constant INDIVIDUAL_BIOMETRICS. */
 	private static final String INDIVIDUAL_BIOMETRICS = "individualBiometrics";
 
@@ -205,7 +199,7 @@ public class PrintServiceImpl implements PrintService{
 	private PublisherClient<String, Object, HttpHeaders> pb;
 
     @Autowired
-    private IDPassReaderComponent qrCodeGenerator2;
+    private IDPassReaderComponent idpassQrCodeGenerator;
 
 	/*
 	 * (non-Javadoc)
@@ -510,7 +504,7 @@ public class PrintServiceImpl implements PrintService{
 		// textFileJson.put("digitalSignature", digitalSignaturedQrData);
 		// Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 		// String printTextFileString = gson.toJson(textFileJson);
-		byte[] qrCodeBytes = qrCodeGenerator2.generateQrCode(qrJsonObj.toString(), pincode, photob64);
+		byte[] qrCodeBytes = idpassQrCodeGenerator.generateQrCode(qrJsonObj.toString(), pincode, photob64);
 		if (qrCodeBytes != null) {
 			String imageString = CryptoUtil.encodeBase64String(qrCodeBytes);
 			attributes.put(QRCODE, "data:image/png;base64," + imageString);

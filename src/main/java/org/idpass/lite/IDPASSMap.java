@@ -16,7 +16,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The IDPASSMap class is the java rendetion of idpass-lite-map.json.
+ * It is used in the IdentFieldsDeserializer deserialization to map a
+ * source field(s) to a destination field.
+ */
+
 public class IDPASSMap {
+    /**
+     * These fields correspond to the idpass-lite-map.json
+     */
     public static List<String> lang;
     @JsonProperty("UIN")
     private FieldDesc UIN;
@@ -27,7 +36,10 @@ public class IDPASSMap {
     private FieldDesc dateOfBirth;
     private FieldDesc address;
 
-    private String f = "";
+    /* This is a temporary field used to hold the current field being parsed */
+    private String currentField = "";
+
+    /* Auto-generated getters/setters and constructors */
 
     public IDPASSMap() {
     }
@@ -68,7 +80,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getGivenName() {
-        f = "givenName";
+        currentField = "givenName";
         return givenName;
     }
 
@@ -77,7 +89,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getSurName() {
-        f = "surName";
+        currentField = "surName";
         return surName;
     }
 
@@ -94,7 +106,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getDateOfBirth() {
-        f = "dateOfBirth";
+        currentField = "dateOfBirth";
         return dateOfBirth;
     }
 
@@ -110,6 +122,16 @@ public class IDPASSMap {
         this.address = address;
     }
 
+    /**
+     * For most fields which are directly mapped such as "gender", the get() method is just
+     * a pass-through. But for fields with no direct mapping, such as the surName field, this method
+     * parses the input data argument which might contain "Doe, John"
+     * and extracts the "Doe" as the surName. The purpose of this method
+     * is to construct a surName from a fullName.
+     * @param data Source field value. For example, fullName = "Doe, John"
+     * @return Returns the best-effort attempt to extract the field value
+     */
+
     public String get(String data) {
         String ret = "";
         if (data == null) return ret;
@@ -118,7 +140,7 @@ public class IDPASSMap {
         String arr[];
 
         try {
-            switch (f) {
+            switch (currentField) {
                 case "surName":
                     arr = ret.split("\\s*(,|\\s)\\s*");
                     if (ret.contains(",")) {
@@ -149,9 +171,15 @@ public class IDPASSMap {
             System.out.println("parse error");
         }
 
-        f = "";
+        currentField = "";
         return ret;
     }
+
+    /**
+     * Loads the configuration json into the object to help in
+     * the deserialization of the input json.
+     * @return
+     */
 
     public static IDPASSMap getInstance() {
         InputStream is = IDPASSMap.class.getClassLoader().getResourceAsStream("idpass-lite-map.json");

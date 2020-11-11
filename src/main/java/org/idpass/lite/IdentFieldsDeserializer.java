@@ -8,6 +8,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
+/**
+ * The associated deserializer of IdentFields
+ */
+
 public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
 
     public IdentFieldsDeserializer() {
@@ -18,13 +22,28 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         super(vc);
     }
 
+    /**
+     * Deserialization implementation. Loads credential subject input json into a tree,
+     * and extracts the field values map defined in idpass-map-lite.json.
+     *
+     * @param parser Standard parser
+     * @param deserializationContext Standard context
+     * @return Returns an IdentFields type with populated fields
+     * @throws IOException Standard exception
+     * @throws JsonProcessingException Standard exception
+     */
+
     @Override
     public IdentFields deserialize(JsonParser parser, DeserializationContext deserializationContext)
             throws IOException, JsonProcessingException
     {
+        // Loads idpass-map-lite.json into idpassMap object
         IDPASSMap idpassMap = IDPASSMap.getInstance();
 
+        // Prepare returned value
         IdentFields ret = new IdentFields();
+
+        // Loads credential subject input json
         ObjectCodec codec = parser.getCodec();
         JsonNode node = codec.readTree(parser);
 
@@ -38,6 +57,8 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         address
         */
 
+        /* Extract the mapped fields */
+
         String address = idpassMap.get(idpassMap.getAddress().from(node));
         String UIN = idpassMap.get(idpassMap.getUIN().from(node));
         String gender = idpassMap.get(idpassMap.getGender().from(node));
@@ -48,6 +69,7 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         String placeOfBirth = idpassMap.get(idpassMap.getPlaceOfBirth().from(node));
         String dateOfBirth = idpassMap.get(idpassMap.getDateOfBirth().from(node));
 
+        /* Populate fields into return value */
         ret.setGivenName(givenName);
         ret.setSurName(surName);
         ret.setUIN(UIN);
