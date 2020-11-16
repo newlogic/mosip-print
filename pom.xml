@@ -227,8 +227,8 @@
 
         <dependency>
             <groupId>org.idpass</groupId>
-            <artifactId>idpass-lite-mosip</artifactId>
-            <version>1.0.4</version>
+            <artifactId>idpass-lite-java</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

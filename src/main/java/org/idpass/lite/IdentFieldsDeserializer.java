@@ -76,7 +76,7 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         ret.setGender(gender);
         ret.setPlaceOfBirth(placeOfBirth);
         ret.setDateOfBirth(dateOfBirth);
-        ret.setAddress(address);
+        ///ret.setAddress(address); /// TODO
 
         return ret;
     }

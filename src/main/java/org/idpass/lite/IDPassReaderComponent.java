@@ -6,6 +6,7 @@ import org.api.proto.Dat;
 import org.api.proto.Ident;
 import org.api.proto.KV;
 import org.idpass.lite.exceptions.IDPassException;
+import org.idpass.lite.proto.PostalAddress;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -91,9 +92,16 @@ public class IDPassReaderComponent
                 .setDay(dob.getDayOfMonth())
                 .build();
 
-        identBuilder.addPrivExtra(KV.newBuilder().setKey("UIN").setValue(idf.getUIN()));
-        identBuilder.addPubExtra(KV.newBuilder().setKey("Gender").setValue(idf.getGender()));
-        identBuilder.addPubExtra(KV.newBuilder().setKey("Address").setValue(idf.getAddress()));
+        PostalAddress postalAddress = PostalAddress.newBuilder()
+                .setLanguageCode("en") /// TODO
+                .addAllAddressLines(idf.getAddressLines())
+                .build();
+
+        identBuilder.setUIN(idf.getUIN());
+        identBuilder.setFullName(idf.getFullName());
+        identBuilder.setPostalAddress(postalAddress);
+        identBuilder.setGender(idf.getGenderAsInt());
+
         identBuilder.setGivenName(idf.getGivenName());
         identBuilder.setSurName(idf.getSurName());
         identBuilder.setPlaceOfBirth(idf.getPlaceOfBirth());

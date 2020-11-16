@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * The IdentFields class represents the collection of fields
@@ -44,10 +45,11 @@ public class IdentFields {
     private String UIN;
     private String gender;
     private String givenName;
+    private String fullName;
     private String surName;
     private String placeOfBirth;
     private String dateOfBirth;
-    private String address;
+    private List<String> addressLines;
 
     /**
      * Accepts a credential subject input json to construct a
@@ -77,16 +79,6 @@ public class IdentFields {
     public IdentFields() {
     }
 
-    public IdentFields(String UIN, String gender, String givenName, String surName, String placeOfBirth, String dateOfBirth, String address) {
-        this.UIN = UIN;
-        this.gender = gender;
-        this.givenName = givenName;
-        this.surName = surName;
-        this.placeOfBirth = placeOfBirth;
-        this.dateOfBirth = dateOfBirth;
-        this.address = address;
-    }
-
     public String getUIN() {
         return UIN;
     }
@@ -101,6 +93,15 @@ public class IdentFields {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public int getGenderAsInt() {
+        int g = 2;
+        switch (this.gender) { /// TODO
+            case "Male":
+                break;
+        }
+        return g;
     }
 
     public String getGivenName() {
@@ -135,11 +136,30 @@ public class IdentFields {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public String getAddress() {
-        return address;
+    public String getFullName() {
+        return fullName;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public List<String> getAddressLines() {
+        return addressLines;
+    }
+
+    public void setAddressLines(List<String> addressLines) {
+        this.addressLines = addressLines;
+    }
+
+    public IdentFields(String UIN, String gender, String givenName, String fullName, String surName, String placeOfBirth, String dateOfBirth, List<String> addressLines) {
+        this.UIN = UIN;
+        this.gender = gender;
+        this.givenName = givenName;
+        this.fullName = fullName;
+        this.surName = surName;
+        this.placeOfBirth = placeOfBirth;
+        this.dateOfBirth = dateOfBirth;
+        this.addressLines = addressLines;
     }
 }
