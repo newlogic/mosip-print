@@ -226,7 +226,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.idpass</groupId>
+            <groupId>io.github.idpass</groupId>
             <artifactId>idpass-lite-java</artifactId>
             <version>1.0.0</version>
         </dependency>

@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import io.mosip.kernel.core.util.CryptoUtil;
 import org.api.proto.Dat;
 import org.api.proto.Ident;
-import org.api.proto.KV;
 import org.idpass.lite.exceptions.IDPassException;
 import org.idpass.lite.proto.PostalAddress;
 import org.springframework.stereotype.Component;
