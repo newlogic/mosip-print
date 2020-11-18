@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The associated deserializer of IdentFields
@@ -59,7 +61,7 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
 
         /* Extract the mapped fields */
 
-        String address = idpassMap.get(idpassMap.getAddress().from(node));
+        String address = idpassMap.get(idpassMap.getAddress().from(node)); /// TODO
         String UIN = idpassMap.get(idpassMap.getUIN().from(node));
         String gender = idpassMap.get(idpassMap.getGender().from(node));
 
@@ -69,6 +71,9 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         String placeOfBirth = idpassMap.get(idpassMap.getPlaceOfBirth().from(node));
         String dateOfBirth = idpassMap.get(idpassMap.getDateOfBirth().from(node));
 
+        List<String> addressLines = new ArrayList<>();
+        addressLines.add(address);
+
         /* Populate fields into return value */
         ret.setGivenName(givenName);
         ret.setSurName(surName);
@@ -76,7 +81,8 @@ public class IdentFieldsDeserializer extends StdDeserializer<IdentFields> {
         ret.setGender(gender);
         ret.setPlaceOfBirth(placeOfBirth);
         ret.setDateOfBirth(dateOfBirth);
-        ///ret.setAddress(address); /// TODO
+        ret.setAddressLines(addressLines);
+        ret.setFullName(givenName + " " + surName);
 
         return ret;
     }
