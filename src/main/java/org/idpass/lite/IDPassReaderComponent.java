@@ -24,7 +24,6 @@ import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
  * an IDPassReader instance
  */
 
-//@Configuration
 @Component
 public class IDPassReaderComponent
 {

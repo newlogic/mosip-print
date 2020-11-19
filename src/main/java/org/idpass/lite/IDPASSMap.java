@@ -80,7 +80,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getGivenName() {
-        currentField = "givenName";
+        currentField = givenName.getValue();
         return givenName;
     }
 
@@ -89,7 +89,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getSurName() {
-        currentField = "surName";
+        currentField = surName.getValue();
         return surName;
     }
 
@@ -106,7 +106,7 @@ public class IDPASSMap {
     }
 
     public FieldDesc getDateOfBirth() {
-        currentField = "dateOfBirth";
+        currentField = dateOfBirth.getValue();
         return dateOfBirth;
     }
 
@@ -140,31 +140,25 @@ public class IDPASSMap {
         String arr[];
 
         try {
-            switch (currentField) {
-                case "surName":
-                    arr = ret.split("\\s*(,|\\s)\\s*");
-                    if (ret.contains(",")) {
-                        ret = arr[0];
-                    } else {
-                        List<String> L = Arrays.asList(arr);
-                        ret = L.get(L.size() - 1);
-                    }
-                   break;
-
-                case "givenName":
-                    arr = ret.split("\\s*(,|\\s)\\s*");
-                    if (ret.contains(",")) {
-                        List<String> L = Arrays.asList(arr);
-                        ret = L.stream().skip(1).collect(Collectors.joining(" "));
-                    } else {
-                        ret = arr[0];
-                    }
-                    break;
-
-                case "dateOfBirth":
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d");
-                    LocalDate dob = LocalDate.parse(ret, formatter);
-                    break;
+            if (currentField.equals(surName.getValue())) {
+                arr = ret.split("\\s*(,|\\s)\\s*");
+                if (ret.contains(",")) {
+                    ret = arr[0];
+                } else {
+                    List<String> L = Arrays.asList(arr);
+                    ret = L.get(L.size() - 1);
+                }
+            } else if(currentField.equals(givenName.getValue())) {
+                arr = ret.split("\\s*(,|\\s)\\s*");
+                if (ret.contains(",")) {
+                    List<String> L = Arrays.asList(arr);
+                    ret = L.stream().skip(1).collect(Collectors.joining(" "));
+                } else {
+                    ret = arr[0];
+                }
+            } else if (currentField.equals(dateOfBirth.getValue())) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d");
+                LocalDate dob = LocalDate.parse(ret, formatter);
             }
 
         } catch (ArrayIndexOutOfBoundsException | DateTimeParseException e) {
