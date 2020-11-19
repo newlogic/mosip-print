@@ -24,6 +24,7 @@ import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
  * an IDPassReader instance
  */
 
+//@Configuration
 @Component
 public class IDPassReaderComponent
 {
@@ -35,14 +36,11 @@ public class IDPassReaderComponent
      * @throws IDPassException Standard exception
      * @throws IOException Standard exception
      */
-    public IDPassReaderComponent()
+    public IDPassReaderComponent(IDPassliteConfig config)
             throws IDPassException, IOException
     {
         reader = new IDPassReader();
-        reader.setDetailsVisible(
-                IDPassReader.DETAIL_GIVENNAME |
-                IDPassReader.DETAIL_SURNAME |
-                IDPassReader.DETAIL_PLACEOFBIRTH);
+        reader.setDetailsVisible(config.getVisibleFields());
     }
 
     /**
