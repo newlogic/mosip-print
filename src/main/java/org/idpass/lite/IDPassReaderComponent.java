@@ -73,7 +73,7 @@ public class IDPassReaderComponent
 
         /* Populate Ident fields from idf object */
 
-        String dobStr = "1920/01/02"; //idf.getDateOfBirth();
+        String dobStr = "1920/01/02"; //idf.getDateOfBirth(); /// TODO
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d");
         LocalDate dob = LocalDate.parse(dobStr, formatter);
         Dat dobProto = Dat.newBuilder()
@@ -89,7 +89,7 @@ public class IDPassReaderComponent
                 .addAllAddressLines(/* idf.getAddressLines() */ addrLines)
                 .build();
 
-        identBuilder.setUIN(/*idf.getUIN()*/ "314159");
+        identBuilder.setUIN(/*idf.getUIN()*/ "314159"); /// TODO
         identBuilder.setFullName(/*idf.getFullName()*/ "John Doe");
         identBuilder.setPostalAddress(postalAddress);
         identBuilder.setGender(/*idf.getGenderAsInt()*/ 2);

@@ -34,8 +34,10 @@ public class IdentFields {
     private Stack<String> stk = new Stack<>();
     private Map<String, String> parsedFields = new HashMap<>();
 
+    // TODO: will be moved to a json config 
     List<String> prefLangs = Arrays.asList("eng", "fra");
 
+    // TODO: will be moved to a json config 
     List<String> fieldsOfInterest = Arrays.asList(
             "fullName", "surName", "givenName", "UIN",
             "gender", "placeOfBirth", "dateOfBirth",
@@ -70,7 +72,6 @@ public class IdentFields {
                 while (kv.hasNext()) {
                     Map.Entry<String, JsonNode> obj = kv.next();
                     String key = obj.getKey();
-                    System.out.println(key);
                     stk.push(key);
                     traverse(obj.getValue());
                     stk.pop();
@@ -99,7 +100,6 @@ public class IdentFields {
                 break;
 
             case STRING:
-                System.out.println(node.asText());
                 addKeyValue(keyname, node.asText());
                 break;
 
