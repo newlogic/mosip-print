@@ -41,7 +41,7 @@ public class IdentFields {
      * configured list of fields of interest.
      */
 
-    private Map<String, String> parsedFields = new HashMap<>();
+    private Map<String, Object> parsedFields = new HashMap<>();
 
     // TODO: will be moved to a json config 
     List<String> prefLangs = Arrays.asList("eng", "fra");
@@ -53,7 +53,7 @@ public class IdentFields {
             "addressLine1", "addressLine2", "addressLine3", "region",
             "province", "postalCode");
 
-    public Map<String, String> parse(String jsonstr)
+    public Map<String, Object> parse(String jsonstr)
             throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jnode = objectMapper.readTree(jsonstr);
@@ -120,13 +120,21 @@ public class IdentFields {
                 }
                 break;
 
+            case NUMBER:
+                addKeyValue(keyname, node.numberValue());
+                break;
+
+            case BOOLEAN:
+                addKeyValue(keyname, node.booleanValue());
+                break;
+
             case NULL:
                 addKeyValue(keyname, "");
                 break;
         }
     }
 
-    private void addKeyValue(String key, String value) {
+    private void addKeyValue(String key, Object value) {
         if (fieldsOfInterest.contains(key)) {
             parsedFields.put(key, value);
         }

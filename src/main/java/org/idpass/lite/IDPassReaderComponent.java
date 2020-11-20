@@ -58,7 +58,7 @@ public class IDPassReaderComponent
             throws IOException
     {
         IdentFields idf = new IdentFields();
-        Map<String, String> idFields = idf.parse(cs);
+        Map<String, Object> idFields = idf.parse(cs);
 
         Ident.Builder identBuilder = Ident.newBuilder()
                 .setPin(pincode);
