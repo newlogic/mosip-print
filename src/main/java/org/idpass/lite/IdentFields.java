@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import io.mosip.print.dto.JsonValue;
 
 import java.io.IOException;
 import java.util.*;
@@ -21,32 +22,6 @@ import java.util.*;
  */
 
 public class IdentFields {
-
-    /**
-     * The LocalizedValue class is used in case MOSIP formats a value
-     * as a list of several language encoding.
-     */
-
-    static class LocalizedValue {
-        private String language;
-        private String value;
-
-        public String getLanguage() {
-            return language;
-        }
-
-        public void setLanguage(String language) {
-            this.language = language;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
-    }
 
     /**
      * The stack stk variable keeps track of nested key paths
@@ -117,10 +92,10 @@ public class IdentFields {
                 outer:
                 for (JsonNode elem: node) {
                     ObjectMapper mapper = new ObjectMapper();
-                    LocalizedValue localizedValue = null;
+                    JsonValue localizedValue = null;
 
                     try {
-                        localizedValue = mapper.treeToValue(elem, LocalizedValue.class);
+                        localizedValue = mapper.treeToValue(elem, JsonValue.class);
                     } catch (MismatchedInputException e) {
                         continue;
                     }
@@ -135,7 +110,14 @@ public class IdentFields {
                 break;
 
             case STRING:
-                addKeyValue(keyname, node.asText());
+                // still need to check if the string is a json string
+                try {
+                    JsonNode jsonnode = new ObjectMapper().readTree(node.asText());
+                    traverse(jsonnode);
+                } catch (Exception e) {
+                    System.out.println(node.asText());
+                    addKeyValue(keyname, node.asText());
+                }
                 break;
 
             case NULL:
