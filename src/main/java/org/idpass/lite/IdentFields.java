@@ -8,7 +8,24 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * The IdentFields::parse() method will walk into the json tree
+ * and extracts out the value of fields that we are interested.
+ *
+ * A second pass is then performed on the data that is gathered on the
+ * first pass: 1) Must comply to mandatory attributes 2) Date must be valid
+ * date 3) Total sum of bytes must fit QR code 4) Language preference localization
+ *
+ * Lastly, a preset fields is populated with their values.
+ *
+ */
+
 public class IdentFields {
+
+    /**
+     * The LocalizedValue class is used in case MOSIP formats a value
+     * as a list of several language encoding.
+     */
 
     static class LocalizedValue {
         private String language;
@@ -31,7 +48,24 @@ public class IdentFields {
         }
     }
 
+    /**
+     * The stack stk variable keeps track of nested key paths
+     * as the json tree is being traversed. It's possible future
+     * use is to be able to express json full path key name for
+     * extraction, such as:
+     *
+     * Record.Person.Id
+     *
+     * To specifically and unambiguously extract the 'Id' field.
+     */
+
     private Stack<String> stk = new Stack<>();
+
+    /**
+     * The parseFields contains the gathered fields based on the
+     * configured list of fields of interest.
+     */
+
     private Map<String, String> parsedFields = new HashMap<>();
 
     // TODO: will be moved to a json config 
@@ -84,6 +118,7 @@ public class IdentFields {
                 for (JsonNode elem: node) {
                     ObjectMapper mapper = new ObjectMapper();
                     LocalizedValue localizedValue = null;
+
                     try {
                         localizedValue = mapper.treeToValue(elem, LocalizedValue.class);
                     } catch (MismatchedInputException e) {
