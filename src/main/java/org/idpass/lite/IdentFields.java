@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.mosip.print.dto.JsonValue;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -46,20 +47,25 @@ public class IdentFields {
     // TODO: will be moved to a json config 
     List<String> prefLangs = Arrays.asList("eng", "fra");
 
-    // TODO: will be moved to a json config 
-    List<String> fieldsOfInterest = Arrays.asList(
-            "fullName", "surName", "givenName", "UIN",
-            "gender", "placeOfBirth", "dateOfBirth",
-            "addressLine1", "addressLine2", "addressLine3", "region",
-            "province", "postalCode");
+    List<String> fieldsOfInterest = new ArrayList<>();
 
-    public Map<String, Object> parse(String jsonstr)
+    public IdentFields(Class<?> clazz) {
+        Field[] fields = clazz.getDeclaredFields();
+        for (int i = 0; i < fields.length; i++) {
+            fieldsOfInterest.add(fields[i].getName());
+        }
+    }
+
+    public static IdentFieldsConstraint parse(String jsonstr, Class<?> clazz)
             throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jnode = objectMapper.readTree(jsonstr);
-        traverse(jnode);
 
-        return parsedFields;
+        IdentFields idf = new IdentFields(clazz);
+        idf.traverse(jnode);
+
+        IdentFieldsConstraint idfc = new IdentFieldsConstraint(idf.parsedFields);
+        return idfc;
     }
 
     private void traverse(JsonNode node)

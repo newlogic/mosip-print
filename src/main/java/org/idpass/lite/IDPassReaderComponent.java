@@ -15,10 +15,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
 
@@ -57,8 +55,9 @@ public class IDPassReaderComponent
     public byte[] generateQrCode(String cs, String pincode, String photob64)
             throws IOException
     {
-        IdentFields idf = new IdentFields();
-        Map<String, Object> idFields = idf.parse(cs);
+        IdentFieldsConstraint idfc = IdentFields.parse(cs, IdentFieldsConstraint.class);
+
+        boolean isValid = idfc.isValid();
 
         Ident.Builder identBuilder = Ident.newBuilder()
                 .setPin(pincode);
@@ -73,30 +72,33 @@ public class IDPassReaderComponent
 
         /* Populate Ident fields from idf object */
 
-        String dobStr = "1920/01/02"; //idf.getDateOfBirth(); /// TODO
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d");
-        LocalDate dob = LocalDate.parse(dobStr, formatter);
+        LocalDate dob = idfc.getDateOfBirth();
         Dat dobProto = Dat.newBuilder()
                 .setYear(dob.getYear())
                 .setMonth(dob.getMonthValue())
                 .setDay(dob.getDayOfMonth())
                 .build();
 
-        List<String> addrLines = Arrays.asList("Address line1", "Address line2");
+        List<String> addrLines = new ArrayList<>();
+        if (idfc.getAddressLine1() != null) addrLines.add(idfc.getAddressLine1());
+        if (idfc.getAddressLine2() != null) addrLines.add(idfc.getAddressLine2());
+        if (idfc.getAddressLine3() != null) addrLines.add(idfc.getAddressLine3());
 
         PostalAddress postalAddress = PostalAddress.newBuilder()
                 .setLanguageCode("en") /// TODO
-                .addAllAddressLines(/* idf.getAddressLines() */ addrLines)
+                .addAllAddressLines(addrLines)
                 .build();
 
-        identBuilder.setUIN(/*idf.getUIN()*/ "314159"); /// TODO
-        identBuilder.setFullName(/*idf.getFullName()*/ "John Doe");
-        identBuilder.setPostalAddress(postalAddress);
-        identBuilder.setGender(/*idf.getGenderAsInt()*/ 2);
+        if (idfc.getUIN() != null) identBuilder.setUIN(idfc.getUIN());
+        if (idfc.getFullName() != null) identBuilder.setFullName(idfc.getFullName());
 
-        identBuilder.setGivenName(/*idf.getGivenName()*/ "John");
-        identBuilder.setSurName(/*idf.getSurName()*/ "Doe");
-        identBuilder.setPlaceOfBirth(/*idf.getPlaceOfBirth()*/ "Cebu");
+        identBuilder.setPostalAddress(postalAddress);
+        identBuilder.setGender(idfc.getGender());
+
+        if (idfc.getGivenName() != null) identBuilder.setGivenName(idfc.getGivenName());
+        if (idfc.getSurName() != null) identBuilder.setSurName(idfc.getSurName());
+        if (idfc.getPlaceOfBirth() != null) identBuilder.setPlaceOfBirth(idfc.getPlaceOfBirth());
+
         identBuilder.setDateOfBirth(dobProto);
 
         Ident ident = identBuilder.build();
