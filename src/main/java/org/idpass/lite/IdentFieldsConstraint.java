@@ -1,6 +1,7 @@
 package org.idpass.lite;
 
 import java.lang.reflect.Field;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -9,13 +10,21 @@ import java.util.Map;
  * The IdentFieldConstraint class is the input class
  * to the Ident class. The getter methods to each field
  * of interest should return the type expected by Ident
- * class.
+ * class. For example, 'gender' here is a String, but from the
+ * perspective of usage as input into the 'Ident' builder
+ * class the gender is an int.
  *
  * The list of member fields in this class are the fields
  * of interest to look for.
  */
 
 public class IdentFieldsConstraint {
+
+    /**
+     * These fields list names are the fields of interests to search for
+     * in the input json. Its corresponding field type is the type
+     * constraint for that field.
+     */
 
     private String fullName;
     private String surName;
@@ -39,33 +48,69 @@ public class IdentFieldsConstraint {
      */
 
     public IdentFieldsConstraint(Map<String, Object> m)
+            throws IllegalAccessException, NoSuchFieldException
     {
         for (Map.Entry<String, Object> melem : m.entrySet()) {
 
-            String k = melem.getKey();
+            String k = melem.getKey(); // k comes from m
+
+            Field kfield = IdentFieldsConstraint.class.getDeclaredField(k);
+            String ktyp = kfield.getType().getCanonicalName(); // ktyp comes from IdentFieldsConstraint field
 
             try {
-                Field f = IdentFieldsConstraint.class.getDeclaredField(k);
+                switch (ktyp) {
+                    case "java.lang.String":
+                        kfield.set(this, melem.getValue());
+                        break;
 
-                if (f.getType().isAssignableFrom(LocalDate.class)) {
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
-                    LocalDate dob = LocalDate.parse(melem.getValue().toString(), formatter);
-                    f.set(this, dob);
-                } else if(f.getType().isAssignableFrom(Number.class)) {
-                    Number num = (Number)melem.getValue();
-                    f.set(this, num);
-                } else{
-                    f.set(this, melem.getValue());
+                    case "java.lang.Number":
+                        Number num = (Number) melem.getValue();
+                        kfield.set(this, num);
+                        break;
+
+                    case "java.time.LocalDate":
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
+                        LocalDate dob = LocalDate.parse(melem.getValue().toString(), formatter);
+                        kfield.set(this, dob);
+                        break;
                 }
 
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-
+            } catch (DateTimeException e) {
+                // Continue parsing the fields because the error fields could be
+                // optional. The final check of field presence/absence is checked
+                // within isValid() method
             }
         }
     }
 
+    /**
+     * Checks if the constraints defined in identfieldsconstraint.json is
+     * satisfied.
+     *
+     * These constraints are of the following:
+     * - presence/absence of a field value (in json)
+     * - type of the field value (in member fields)
+     * - total bytes count must fit QR code capacity (sum total during parsing)
+     *
+     * That is, some fields are required mandatory to be present.
+     * Some fields are optional. This presence/absence constraint
+     * is to be declared in the accompanying identfieldsconstraint.json
+     * file.
+     *
+     * The field value should render to its target type. This type
+     * constraint is according to the member field type within
+     * IdentFieldsConstraint class.
+     *
+     * @return True if the constraint is satisfied. Returns false, otherwise.
+     */
+
     public boolean isValid() {
         /// TODO: read json file, check if field is mandatory
+
+        /*if (dateOfBirth == null) {
+            return false;
+        }*/
+
         return true;
     }
 

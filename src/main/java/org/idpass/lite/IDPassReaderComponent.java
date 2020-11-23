@@ -54,16 +54,19 @@ public class IDPassReaderComponent
      * @return Returns PNG QR code of the generated IDPASS LITE card
      */
     public byte[] generateQrCode(String cs, String pincode, String photob64)
-            throws IOException {
-
+            throws IOException
+    {
         IdentFieldsConstraint idfc = null;
         try {
             idfc = (IdentFieldsConstraint) IdentFields.parse(cs, IdentFieldsConstraint.class);
-        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+
+            if (idfc == null || !idfc.isValid()) { // in terms of identfieldsconstraint.json
+                return null;
+            }
+
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             return null;
         }
-
-        boolean isValid = idfc.isValid();
 
         Ident.Builder identBuilder = Ident.newBuilder()
                 .setPin(pincode);
@@ -147,7 +150,7 @@ public class IDPassReaderComponent
             qrcodeId = bos.toByteArray();
 
         } catch (IOException | IDPassException e) {
-            e.printStackTrace();
+            return null;
         }
 
         return  qrcodeId;

@@ -51,6 +51,13 @@ public class IdentFields {
 
     List<String> fieldsOfInterest = new ArrayList<>();
 
+    /**
+     * The defined member fields in 'clazz' are the fields of interest to
+     * look for.
+     * @param clazz A decoupled type whose member fields defines the fields
+     *              of interest to search for in the input json
+     */
+
     public IdentFields(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
         for (int i = 0; i < fields.length; i++) {
@@ -58,8 +65,28 @@ public class IdentFields {
         }
     }
 
+    /**
+     * The parse method is a decoupled method, and currently it is indirectly associated
+     * with the IdentFieldsConstraint.java class.
+     *
+     * The IdentFields class extracts every fields of interest. These fields of interest
+     * are the member fields of 'clazz' parameter.
+     *
+     * @param jsonstr Any input json string
+     * @param clazz The target type to construct based from the input json
+     * @return
+     * @throws IOException Standard exception
+     * @throws NoSuchMethodException Standard exception
+     * @throws IllegalAccessException Standard exception
+     * @throws InvocationTargetException Standard exception
+     * @throws InstantiationException Standard exception
+     */
+
     public static Object parse(String jsonstr, Class<?> clazz)
-            throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+            throws IOException, NoSuchMethodException,
+            IllegalAccessException,
+            InstantiationException, InvocationTargetException
+    {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jnode = objectMapper.readTree(jsonstr);
 
@@ -68,7 +95,6 @@ public class IdentFields {
 
         Constructor ctor = clazz.getDeclaredConstructor(Map.class);
         Object obj = ctor.newInstance(idf.parsedFields);
-
         return obj;
     }
 
