@@ -168,7 +168,7 @@ public class IDPassReaderComponent
             ImageIO.write(image, "JPG", imgBytes);
             jpgImg = imgBytes.toByteArray();
         } catch (IOException e) {
-
+            return null;
         }
 
         return jpgImg;
