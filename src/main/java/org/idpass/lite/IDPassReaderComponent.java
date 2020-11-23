@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +54,14 @@ public class IDPassReaderComponent
      * @return Returns PNG QR code of the generated IDPASS LITE card
      */
     public byte[] generateQrCode(String cs, String pincode, String photob64)
-            throws IOException
-    {
-        IdentFieldsConstraint idfc = IdentFields.parse(cs, IdentFieldsConstraint.class);
+            throws IOException {
+
+        IdentFieldsConstraint idfc = null;
+        try {
+            idfc = (IdentFieldsConstraint) IdentFields.parse(cs, IdentFieldsConstraint.class);
+        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+            return null;
+        }
 
         boolean isValid = idfc.isValid();
 
@@ -80,24 +86,53 @@ public class IDPassReaderComponent
                 .build();
 
         List<String> addrLines = new ArrayList<>();
-        if (idfc.getAddressLine1() != null) addrLines.add(idfc.getAddressLine1());
-        if (idfc.getAddressLine2() != null) addrLines.add(idfc.getAddressLine2());
-        if (idfc.getAddressLine3() != null) addrLines.add(idfc.getAddressLine3());
+        if (idfc.getAddressLine1() != null) {
+            addrLines.add(idfc.getAddressLine1());
+        }
+        if (idfc.getAddressLine2() != null) {
+            addrLines.add(idfc.getAddressLine2());
+        }
+        if (idfc.getAddressLine3() != null) {
+            addrLines.add(idfc.getAddressLine3());
+        }
 
-        PostalAddress postalAddress = PostalAddress.newBuilder()
+        PostalAddress.Builder postalAddressBuilder = PostalAddress.newBuilder()
                 .setLanguageCode("en") /// TODO
-                .addAllAddressLines(addrLines)
-                .build();
+                .addAllAddressLines(addrLines);
 
-        if (idfc.getUIN() != null) identBuilder.setUIN(idfc.getUIN());
-        if (idfc.getFullName() != null) identBuilder.setFullName(idfc.getFullName());
+        if (idfc.getRegion() != null) {
+            postalAddressBuilder.setRegionCode(idfc.getRegion());
+        }
+
+        if (idfc.getProvince() != null) {
+           postalAddressBuilder.setAdministrativeArea(idfc.getProvince());
+        }
+
+        if (idfc.getPostalCode() != null) {
+            postalAddressBuilder.setPostalCode(idfc.getPostalCode());
+        }
+
+        PostalAddress postalAddress = postalAddressBuilder.build();
+
+        if (idfc.getUIN() != null) {
+            identBuilder.setUIN(idfc.getUIN());
+        }
+        if (idfc.getFullName() != null) {
+            identBuilder.setFullName(idfc.getFullName());
+        }
 
         identBuilder.setPostalAddress(postalAddress);
         identBuilder.setGender(idfc.getGender());
 
-        if (idfc.getGivenName() != null) identBuilder.setGivenName(idfc.getGivenName());
-        if (idfc.getSurName() != null) identBuilder.setSurName(idfc.getSurName());
-        if (idfc.getPlaceOfBirth() != null) identBuilder.setPlaceOfBirth(idfc.getPlaceOfBirth());
+        if (idfc.getGivenName() != null) {
+            identBuilder.setGivenName(idfc.getGivenName());
+        }
+        if (idfc.getSurName() != null) {
+            identBuilder.setSurName(idfc.getSurName());
+        }
+        if (idfc.getPlaceOfBirth() != null) {
+            identBuilder.setPlaceOfBirth(idfc.getPlaceOfBirth());
+        }
 
         identBuilder.setDateOfBirth(dobProto);
 

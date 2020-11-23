@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.mosip.print.dto.JsonValue;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -56,16 +58,18 @@ public class IdentFields {
         }
     }
 
-    public static IdentFieldsConstraint parse(String jsonstr, Class<?> clazz)
-            throws IOException {
+    public static Object parse(String jsonstr, Class<?> clazz)
+            throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jnode = objectMapper.readTree(jsonstr);
 
         IdentFields idf = new IdentFields(clazz);
         idf.traverse(jnode);
 
-        IdentFieldsConstraint idfc = new IdentFieldsConstraint(idf.parsedFields);
-        return idfc;
+        Constructor ctor = clazz.getDeclaredConstructor(Map.class);
+        Object obj = ctor.newInstance(idf.parsedFields);
+
+        return obj;
     }
 
     private void traverse(JsonNode node)
@@ -121,7 +125,6 @@ public class IdentFields {
                     JsonNode jsonnode = new ObjectMapper().readTree(node.asText());
                     traverse(jsonnode);
                 } catch (Exception e) {
-                    System.out.println(node.asText());
                     addKeyValue(keyname, node.asText());
                 }
                 break;
