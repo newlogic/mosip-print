@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The IdentFieldConstraint class is the input class
@@ -132,15 +132,30 @@ public class IdentFieldsConstraint {
         return UIN != null ? UIN.toString() : null;
     }
 
+    /**
+     * Returns the gender as numeric int for a particular language
+     * as set in the json configuration.
+     * @return Returns 1 for female, 2 for male
+     */
+
     public int getGender() {
-        switch (gender) {
-            case "Male": /// TODO: Generalized for multiple languages?
-                return 2;
-            case "Female":
+        String lang = IdentFields.prefLangs.get(0);
+        List<String> male = IdentFields.genderMap.get(lang).male;
+        List<String> female = IdentFields.genderMap.get(lang).female;
+
+        for (String s : female) {
+            if (s.equals(gender)) {
                 return 1;
-            default:
-                return 3;
+            }
         }
+
+        for (String s : male) {
+            if (s.equals(gender)) {
+                return 2;
+            }
+        }
+
+        return 0;
     }
 
     public String getPlaceOfBirth() {

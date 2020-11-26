@@ -1,0 +1,18 @@
+{
+  "prefLangs": [
+    {
+      "eng": {
+        "male": ["Male","boy"],
+        "female": ["Female", "girl"]
+      }
+    },
+    {
+      "fra": {
+        "male": ["mâle"],
+        "female": ["femelle"]
+      }
+    }
+  ],
+  "dateFormat": ["yyyy/MM/d", "d/MM/yyyy"],
+  "mandatory": ["fullName", "gender", "dateOfBirth"]
+}

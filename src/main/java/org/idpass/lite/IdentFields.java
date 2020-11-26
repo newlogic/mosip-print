@@ -6,11 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.mosip.print.dto.JsonValue;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The IdentFields::parse() method will walk into the json tree
@@ -46,10 +51,68 @@ public class IdentFields {
 
     private Map<String, Object> parsedFields = new HashMap<>();
 
-    // TODO: will be moved to a json config 
-    List<String> prefLangs = Arrays.asList("eng", "fra");
+    // Values populated from json config
+    public static List<String> prefLangs = new ArrayList<>();
+
+    /**
+     * The fieldsOfInterest member field are the member fields
+     * of the type class that contains the constrained type
+     * input fields for Ident.Builder class. The member field's
+     * name is search for in the configuration json, and the
+     * found json value must render to the member's type.
+     */
 
     List<String> fieldsOfInterest = new ArrayList<>();
+
+    /**
+     * The GenderMap class is a DTO that reads the configured values
+     * in the json file corresponding to gender for each preferred
+     * language.
+     */
+
+    static class GenderMap {
+        public List<String> male;
+        public List<String> female;
+    }
+
+    public static Map<String, IdentFields.GenderMap> genderMap = new HashMap<>();
+
+    /**
+     * Sets the json configuration that defines the additional constraint rules
+     * associated with the IdentFieldsConstraint.java class. Whereas the class
+     * defines the type, the json defines the rest of the configurable parameters
+     * that includes the following:
+     *
+     * - which member fields are mandatory
+     * - the date format
+     * - preferred languages
+     * - the gender map to int for gender
+     *
+     * @param is Is the json input stream
+     * @throws IOException Standard exception
+     */
+
+    public static void setConfig(InputStream is)
+            throws IOException
+    {
+        String jsonstr = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))
+                .lines().collect(Collectors.joining());
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(jsonstr);
+        JsonNode langs = node.get("prefLangs");
+
+        for (JsonNode lang : langs) {
+            Iterator<Map.Entry<String, JsonNode>> kv = lang.fields();
+            if (kv.hasNext()) {
+                Map.Entry<String, JsonNode> obj = kv.next();
+                String langName = obj.getKey();
+                prefLangs.add(langName);
+                IdentFields.GenderMap gmap = mapper.treeToValue(obj.getValue(), IdentFields.GenderMap.class);
+                genderMap.put(langName, gmap);
+            }
+        }
+    }
 
     /**
      * The defined member fields in 'clazz' are the fields of interest to
@@ -58,11 +121,14 @@ public class IdentFields {
      *              of interest to search for in the input json
      */
 
-    public IdentFields(Class<?> clazz) {
+    public IdentFields(Class<?> clazz) throws IOException {
         Field[] fields = clazz.getDeclaredFields();
         for (int i = 0; i < fields.length; i++) {
             fieldsOfInterest.add(fields[i].getName());
         }
+
+        InputStream is = IdentFields.class.getClassLoader().getResourceAsStream("identfieldsconstraint.json");
+        IdentFields.setConfig(is);
     }
 
     /**
