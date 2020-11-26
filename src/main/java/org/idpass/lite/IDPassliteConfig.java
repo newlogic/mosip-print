@@ -60,6 +60,15 @@ public class IDPassliteConfig {
     }
 
     private QrCode qrcode = new QrCode();
+    private String editorUrl;
+
+    public String getEditorUrl() {
+        return editorUrl;
+    }
+
+    public void setEditorUrl(String editorUrl) {
+        this.editorUrl = editorUrl;
+    }
 
     /** Getter/Setter helper methods */
 

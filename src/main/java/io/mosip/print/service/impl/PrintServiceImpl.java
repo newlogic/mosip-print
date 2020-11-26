@@ -269,7 +269,8 @@ public class PrintServiceImpl implements PrintService{
 			}
 
 			// generating pdf
-			byte[] pdfbytes = uinCardGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
+			//byte[] pdfbytes = uinCardGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
+			byte[] pdfbytes = idpassQrCodeGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
 			byteMap.put(UIN_CARD_PDF, pdfbytes);
 
 			byte[] uinbyte = attributes.get("UIN").toString().getBytes();
