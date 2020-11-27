@@ -88,7 +88,13 @@ public class IDPassReaderComponent
     public IDPassReaderComponent(IDPassliteConfig config)
             throws IDPassException, IOException
     {
-        reader = new IDPassReader();
+        InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
+
+        // Initialize reader
+        IDPassReader reader = new IDPassReader(
+                config.getStorePrefix(), is,
+                config.getStorePassword(), config.getKeyPassword());
+        
         reader.setDetailsVisible(config.getVisibleFields());
     }
 
