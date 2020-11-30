@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.idpass.lite.IDPassReaderComponent;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,8 @@ public class Print {
 	@Value("${mosip.event.topic}")
 	private String topic;
 
+	@Autowired
+	private IDPassReaderComponent idpassQrCodeGenerator;
 
 	@PostMapping(value = "/enqueue", consumes = "application/json")
 	@PreAuthenticateContentAndVerifyIntent(secret = "Kslk30SNF2AChs2", callback = "/print/enqueue", topic = "http://mosip.io/print/pdf")
@@ -59,6 +62,8 @@ public class Print {
 	@PostMapping(path = "/callback/notifyPrint", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthenticateContentAndVerifyIntent(secret = "Kslk30SNF2AChs2", callback = "/v1/print/print/callback/notifyPrint", topic = "${mosip.event.topic}")
 	public ResponseEntity<Object> handleSubscribeEvent(@RequestBody EventModel eventModel) throws IOException {
+		String publishedOn = eventModel.getPublishedOn();
+		idpassQrCodeGenerator.setIssuanceDate(publishedOn);
 		String credential = eventModel.getEvent().getData().get("credential").toString();
 		byte[] str1 = CryptoUtil.decodeBase64(credential);
 		String decodedCrdential = new String(str1, Charset.forName("UTF-8"));

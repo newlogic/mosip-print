@@ -39,6 +39,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +78,26 @@ public class IDPassReaderComponent
     @Value("${mosip.registration.processor.print.service.uincard.signature.reason}")
     private String reason;
 
+    private String issuanceDate;
+
     ObjectMapper mapper = new ObjectMapper();
+
+    public LocalDate getIssuanceDateAsLocalDate() {
+        ZonedDateTime zdt = ZonedDateTime.parse(issuanceDate);
+        LocalDate ld = zdt.toLocalDate();
+        return ld;
+    }
+
+    public String getIssuanceDate() {
+        ZonedDateTime zdt = ZonedDateTime.parse(issuanceDate);
+        LocalDate ld = zdt.toLocalDate();
+        System.out.println(ld.format(DateTimeFormatter.ofPattern("yyyy/MM/d")));
+        return issuanceDate;
+    }
+
+    public void setIssuanceDate(String issuanceDate) {
+        this.issuanceDate = issuanceDate;
+    }
 
     /**
      * Instantiates IDPassReader reader with a particular configuration
@@ -91,10 +111,10 @@ public class IDPassReaderComponent
         InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
 
         // Initialize reader
-        IDPassReader reader = new IDPassReader(
+        reader = new IDPassReader(
                 config.getStorePrefix(), is,
                 config.getStorePassword(), config.getKeyPassword());
-        
+
         reader.setDetailsVisible(config.getVisibleFields());
     }
 
@@ -229,19 +249,22 @@ public class IDPassReaderComponent
         front.put("nationality","African");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
         front.put("birth_date",m_idfc.getDateOfBirth().format(formatter));
-        front.put("issue_date","2020/11/11");
-        front.put("expiry_date","2030/11/11");
+        String issue_date = getIssuanceDateAsLocalDate().format(formatter);
+        front.put("issue_date",issue_date);
+        LocalDate exp = getIssuanceDateAsLocalDate().plusYears(10);
+        front.put("expiry_date", exp.format(formatter));
 
         String svgqrcode = CryptoUtil.encodeBase64String(m_svg);
 
         ObjectNode back = mapper.createObjectNode();
-        back.put("qrcode", /*svgqrcode*/ "Test Message Here");
+        back.put("qrcode", "data:image/svg+xml;base64," + svgqrcode);
 
         ObjectNode fields = mapper.createObjectNode();
         fields.set("front", front);
         fields.set("back", back);
 
         ObjectNode payload = mapper.createObjectNode();
+        payload.put("create_qr_code", false);
         payload.set("fields", fields);
 
         String jsonPayload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
