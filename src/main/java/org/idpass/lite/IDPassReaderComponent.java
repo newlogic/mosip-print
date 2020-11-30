@@ -80,6 +80,7 @@ public class IDPassReaderComponent
     private String reason;
 
     private String issuanceDate;
+    private String facePhotob64;
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -168,6 +169,7 @@ public class IDPassReaderComponent
 
         if (photo != null) {
             identBuilder.setPhoto(ByteString.copyFrom(photo));
+            facePhotob64 = CryptoUtil.encodeBase64String(photo);
         }
 
         /* Populate Ident fields from idf object */
@@ -268,6 +270,7 @@ public class IDPassReaderComponent
         front.put("issue_date",issue_date);
         LocalDate exp = getIssuanceDateAsLocalDate().plusYears(10);
         front.put("expiry_date", exp.format(formatter));
+        front.put("qrcode", "data:image/jpeg;base64," + facePhotob64);
 
         String svgqrcode = CryptoUtil.encodeBase64String(m_svg);
 
