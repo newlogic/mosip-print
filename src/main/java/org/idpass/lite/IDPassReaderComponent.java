@@ -37,7 +37,10 @@ import javax.imageio.ImageReadParam;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -324,11 +327,21 @@ public class IDPassReaderComponent
         try {
             // Calls editor.idpass.org REST API to generate initial PDF
             byte[] pdfbuf = editorGenerate();
-            PDFSignatureRequestDto request = new PDFSignatureRequestDto(0, 0, 0, 0, reason, 1, password);
+            Path tmp1 = Files.createTempFile(null, null);
+            OutputStream tmp1os = new FileOutputStream(tmp1.toFile());
+            tmp1os.write(pdfbuf);
+
+            List<URL> pdfList = new ArrayList<>();
+            pdfList.add(tmp1.toUri().toURL());
+            pdfList.add(IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf"));
+            byte[] threepages = pdfGenerator.mergePDF(pdfList);
+            tmp1.toFile().delete();
+
+            PDFSignatureRequestDto request = new PDFSignatureRequestDto(5, 2, 232, 72, reason, 3, password);
 
             request.setApplicationId("KERNEL");
             request.setReferenceId("SIGN");
-            request.setData(CryptoUtil.encodeBase64String(pdfbuf));
+            request.setData(CryptoUtil.encodeBase64String(threepages));
             DateTimeFormatter format = DateTimeFormatter.ofPattern(env.getProperty(DATETIME_PATTERN));
             LocalDateTime localdatetime = LocalDateTime
                     .parse(DateUtils.getUTCCurrentDateTimeString(env.getProperty(DATETIME_PATTERN)), format);
