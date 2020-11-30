@@ -22,6 +22,7 @@ import io.mosip.registration.print.core.http.ResponseWrapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.api.proto.Dat;
 import org.api.proto.Ident;
+import org.api.proto.KV;
 import org.idpass.lite.exceptions.IDPassException;
 import org.idpass.lite.proto.PostalAddress;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,8 +143,24 @@ public class IDPassReaderComponent
             return null;
         }
 
+        List<String> addressLines = new ArrayList<>();
+        if (m_idfc.getAddressLine1() != null) {
+            addressLines.add(m_idfc.getAddressLine1());
+        }
+        if (m_idfc.getAddressLine2() != null) {
+            addressLines.add(m_idfc.getAddressLine2());
+        }
+        if (m_idfc.getAddressLine3() != null) {
+            addressLines.add(m_idfc.getAddressLine3());
+        }
+        String address = String.join(" ",addressLines);
+
         Ident.Builder identBuilder = Ident.newBuilder()
                 .setPin(pincode);
+
+        if (address != null && !address.isEmpty() && !address.isBlank()) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue("Address").setKey(address));
+        }
 
         String imageType = photob64.split(",")[0];
         byte[] photo = CryptoUtil.decodeBase64(photob64.split(",")[1]);
@@ -245,7 +262,6 @@ public class IDPassReaderComponent
         front.put("identification_number",m_idfc.getUIN());
         front.put("full_name", m_idfc.getFullName());
         front.put("sex",m_idfc.getGender() == 1 ? "Female" : "Male");
-        front.put("nationality","African");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
         front.put("birth_date",m_idfc.getDateOfBirth().format(formatter));
         String issue_date = getIssuanceDateAsLocalDate().format(formatter);
