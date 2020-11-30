@@ -243,8 +243,7 @@ public class IDPassReaderComponent
 
         ObjectNode front = mapper.createObjectNode();
         front.put("identification_number",m_idfc.getUIN());
-        front.put("given_names",m_idfc.getGivenName() == null ? m_idfc.getFullName() : m_idfc.getGivenName());
-        front.put("surname",m_idfc.getSurName() == null ? m_idfc.getFullName() : m_idfc.getSurName());
+        front.put("full_name", m_idfc.getFullName());
         front.put("sex",m_idfc.getGender() == 1 ? "Female" : "Male");
         front.put("nationality","African");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
