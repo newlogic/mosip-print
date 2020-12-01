@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.idpass.lite.IDPassReaderComponent;
 import org.joda.time.DateTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -182,7 +183,7 @@ public class PrintServiceImpl implements PrintService{
 
 	/** The qr code generator. */
 	@Autowired
-	private QrCodeGenerator<QrVersion> qrCodeGenerator;
+	private IDPassReaderComponent idpassQrCodeGenerator;
 
 	/** The Constant INDIVIDUAL_BIOMETRICS. */
 	private static final String INDIVIDUAL_BIOMETRICS = "individualBiometrics";
@@ -296,7 +297,7 @@ public class PrintServiceImpl implements PrintService{
 			}
 
 			// generating pdf
-			byte[] pdfbytes = uinCardGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
+			byte[] pdfbytes = idpassQrCodeGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
 			byteMap.put(UIN_CARD_PDF, pdfbytes);
 
 			byte[] uinbyte = attributes.get("UIN").toString().getBytes();
@@ -529,7 +530,8 @@ public class PrintServiceImpl implements PrintService{
 		// textFileJson.put("digitalSignature", digitalSignaturedQrData);
 		// Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 		// String printTextFileString = gson.toJson(textFileJson);
-		byte[] qrCodeBytes = qrCodeGenerator.generateQrCode(qrJsonObj.toString(), QrVersion.V30);
+		String photob64 = (String)attributes.get("ApplicantPhoto");
+		byte[] qrCodeBytes = idpassQrCodeGenerator.generateQrCode(qrJsonObj.toString(), photob64);
 		if (qrCodeBytes != null) {
 			String imageString = CryptoUtil.encodeBase64String(qrCodeBytes);
 			attributes.put(QRCODE, "data:image/png;base64," + imageString);

@@ -84,6 +84,15 @@ public class IDPassReaderComponent
 
     private String issuanceDate;
     private String facePhotob64;
+    private String protk;
+
+    public String getProtk() {
+        return protk;
+    }
+
+    public void setProtk(String protk) {
+        this.protk = protk;
+    }
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -132,7 +141,7 @@ public class IDPassReaderComponent
      * @param photob64 A facial photo image
      * @return Returns PNG QR code of the generated IDPASS LITE card
      */
-    public byte[] generateQrCode(String cs, String pincode, String photob64)
+    public byte[] generateQrCode(String cs, String photob64)
             throws IOException
     {
         m_idfc = null;
@@ -160,7 +169,7 @@ public class IDPassReaderComponent
         String address = String.join(" ",addressLines);
 
         Ident.Builder identBuilder = Ident.newBuilder()
-                .setPin(pincode);
+                .setPin(protk);
 
         if (address != null && !address.isEmpty() && !address.isBlank()) {
             identBuilder.addPrivExtra(KV.newBuilder().setValue("Address").setKey(address));
@@ -178,11 +187,15 @@ public class IDPassReaderComponent
         /* Populate Ident fields from idf object */
 
         LocalDate dob = m_idfc.getDateOfBirth();
-        Dat dobProto = Dat.newBuilder()
-                .setYear(dob.getYear())
-                .setMonth(dob.getMonthValue())
-                .setDay(dob.getDayOfMonth())
-                .build();
+        Dat dobProto = Dat.getDefaultInstance();
+
+        if (dob != null) {
+            dobProto = Dat.newBuilder()
+                    .setYear(dob.getYear())
+                    .setMonth(dob.getMonthValue())
+                    .setDay(dob.getDayOfMonth())
+                    .build();
+        }
 
         List<String> addrLines = new ArrayList<>();
         if (m_idfc.getAddressLine1() != null) {
@@ -233,7 +246,9 @@ public class IDPassReaderComponent
             identBuilder.setPlaceOfBirth(m_idfc.getPlaceOfBirth());
         }
 
-        identBuilder.setDateOfBirth(dobProto);
+        if (dob != null) {
+            identBuilder.setDateOfBirth(dobProto);
+        }
 
         Ident ident = identBuilder.build();
         byte[] qrcodeId = null;
@@ -268,7 +283,9 @@ public class IDPassReaderComponent
         front.put("full_name", m_idfc.getFullName());
         front.put("sex",m_idfc.getGender() == 1 ? "Female" : "Male");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
-        front.put("birth_date",m_idfc.getDateOfBirth().format(formatter));
+        if (m_idfc.getDateOfBirth() != null) { /// TODO: generalized these 'if' checks
+            front.put("birth_date", m_idfc.getDateOfBirth().format(formatter));
+        }
         String issue_date = getIssuanceDateAsLocalDate().format(formatter);
         front.put("issue_date",issue_date);
         LocalDate exp = getIssuanceDateAsLocalDate().plusYears(10);

@@ -60,7 +60,8 @@ public class IdentFieldsConstraint {
             try {
                 switch (ktyp) {
                     case "java.lang.String":
-                        kfield.set(this, melem.getValue());
+                        String v = new String(melem.getValue().toString());
+                        kfield.set(this, v);
                         break;
 
                     case "java.lang.Number":
