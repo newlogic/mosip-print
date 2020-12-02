@@ -38,7 +38,88 @@ public class IdentFieldsConstraint {
     private String addressLine3;
     private String region;
     private String province;
+    private String city;
     private String postalCode;
+    private Number age;
+    private String phone;
+    private String email;
+    private Number cnieNumber;
+    private String localAdministrativeAuthority;
+    private String parentOrGuardianName;
+    private Number parentOrGuardianRIDorUIN;
+    private Number id;
+
+    public Number getId() {
+        return id;
+    }
+
+    public void setId(Number id) {
+        this.id = id;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public Number getAge() {
+        return age;
+    }
+
+    public void setAge(Number age) {
+        this.age = age;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Number getCnieNumber() {
+        return cnieNumber;
+    }
+
+    public void setCnieNumber(Number cnieNumber) {
+        this.cnieNumber = cnieNumber;
+    }
+
+    public String getLocalAdministrativeAuthority() {
+        return localAdministrativeAuthority;
+    }
+
+    public void setLocalAdministrativeAuthority(String localAdministrativeAuthority) {
+        this.localAdministrativeAuthority = localAdministrativeAuthority;
+    }
+
+    public String getParentOrGuardianName() {
+        return parentOrGuardianName;
+    }
+
+    public void setParentOrGuardianName(String parentOrGuardianName) {
+        this.parentOrGuardianName = parentOrGuardianName;
+    }
+
+    public Number getParentOrGuardianRIDorUIN() {
+        return parentOrGuardianRIDorUIN;
+    }
+
+    public void setParentOrGuardianRIDorUIN(Number parentOrGuardianRIDorUIN) {
+        this.parentOrGuardianRIDorUIN = parentOrGuardianRIDorUIN;
+    }
 
     /**
      * The only constructor that accepts a map of found key/value pairs

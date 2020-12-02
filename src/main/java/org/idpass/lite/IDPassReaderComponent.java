@@ -86,6 +86,13 @@ public class IDPassReaderComponent
     private String facePhotob64;
     private String protk;
 
+    final private static String IDPASSEXTRA_AGE = "Age";
+    final private static String IDPASSEXTRA_PHONE = "Phone";
+    final private static String IDPASSEXTRA_CNIENUMBER = "CNIE Number";
+    final private static String IDPASSEXTRA_GUARDIANNAME = "Guardian Name";
+    final private static String IDPASSEXTRA_GUARDIANID = "Guardian UIN";
+    final private static String IDPASSEXTRA_ID = "ID";
+
     public String getProtk() {
         return protk;
     }
@@ -166,18 +173,40 @@ public class IDPassReaderComponent
         if (m_idfc.getAddressLine3() != null) {
             addressLines.add(m_idfc.getAddressLine3());
         }
-        String address = String.join(" ",addressLines);
 
         Ident.Builder identBuilder = Ident.newBuilder()
                 .setPin(protk);
 
-        if (address != null && !address.isEmpty() && !address.isBlank()) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue("Address").setKey(address));
+        /// TODO: Use Field instrospection to simplify these if check checks
+        if (m_idfc.getAge() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_AGE).setKey(m_idfc.getAge().toString()));
+        }
+
+        if (m_idfc.getPhone() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_PHONE).setKey(m_idfc.getPhone()));
+        }
+
+        if (m_idfc.getCnieNumber() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_CNIENUMBER).setKey(m_idfc.getCnieNumber().toString()));
+        }
+
+        if (m_idfc.getParentOrGuardianName() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANNAME).setKey(m_idfc.getParentOrGuardianName()));
+        }
+
+        if (m_idfc.getParentOrGuardianRIDorUIN() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANID).setKey(m_idfc.getParentOrGuardianRIDorUIN().toString()));
+        }
+
+        if (m_idfc.getId() != null) {
+            identBuilder.addPubExtra(KV.newBuilder().setValue(IDPASSEXTRA_ID).setKey(m_idfc.getId().toString()));
         }
 
         String imageType = photob64.split(",")[0];
         byte[] photo = CryptoUtil.decodeBase64(photob64.split(",")[1]);
-        photo = convertJ2KToJPG(photo);
+        if (/* imageType.equals("data:image/x-jp2;base64") */ true) { /// TODO: Already raised this issue
+            photo = convertJ2KToJPG(photo);
+        }
 
         if (photo != null) {
             identBuilder.setPhoto(ByteString.copyFrom(photo));
@@ -222,6 +251,14 @@ public class IDPassReaderComponent
 
         if (m_idfc.getPostalCode() != null) {
             postalAddressBuilder.setPostalCode(m_idfc.getPostalCode());
+        }
+
+        if (m_idfc.getLocalAdministrativeAuthority() != null) {
+            postalAddressBuilder.setAdministrativeArea(m_idfc.getLocalAdministrativeAuthority());
+        }
+
+        if (m_idfc.getCity() != null) {
+            postalAddressBuilder.setLocality(m_idfc.getCity());
         }
 
         PostalAddress postalAddress = postalAddressBuilder.build();
