@@ -1,5 +1,10 @@
 package org.idpass.lite;
 
+import org.api.proto.Dat;
+import org.api.proto.Ident;
+import org.api.proto.KV;
+import org.idpass.lite.proto.PostalAddress;
+
 import java.lang.reflect.Field;
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -48,6 +53,65 @@ public class IdentFieldsConstraint {
     private String parentOrGuardianName;
     private Number parentOrGuardianRIDorUIN;
     private Number id;
+
+    /**
+     * Additional pieces of information not in the
+     * protobuf message CardDetails definition,
+     * shall be stored as a key/value pair of
+     * extra information inside the QR code.
+     *
+     * The default visibility of these extra pieces of
+     * information is controlled by its associated
+     * boolean flag.
+     *
+     * Protobuf definitions:
+     * https://github.com/idpass/idpass-lite/blob/newprotofields/lib/src/proto/idpasslite.proto
+     */
+
+    enum Extras {
+        AGE("Age",false),
+        PHONE("Phone",false),
+        CNIENUMBER("CNIE Number",false),
+        GUARDIANNAME("Guardian Name",false),
+        GUARDIANID("Guardian UIN",false),
+        ID("ID",true);
+
+        private final String text;
+        private final boolean visible;
+
+        Extras(String text, boolean visible) {
+            this.text = text;
+            this.visible = visible;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+    }
+
+    /**
+     * This maps a member fields of this class to an associated
+     * display string value in the map. For example,
+     * "CNIE Number" is the key and its value is from the "cnieNumber"
+     * member field of this class instance.
+     *
+     * This is just to avoid the long repeated 'if' checks, when
+     * done manually.
+     */
+
+    private static Map<String, Extras> mbuilde = new HashMap<>() {{
+        put("age", Extras.AGE);
+        put("phone",Extras.PHONE);
+        put("cnieNumber",Extras.CNIENUMBER);
+        put("parentOrGuardianName",Extras.GUARDIANNAME);
+        put("parentOrGuardianRIDorUIN",Extras.GUARDIANID);
+        put("id",Extras.ID);
+    }};
 
     public Number getId() {
         return id;
@@ -270,5 +334,107 @@ public class IdentFieldsConstraint {
 
     public String getPostalCode() {
         return postalCode;
+    }
+
+    /**
+     * Creates an Ident.Builder instance.
+     *
+     * @return Returns a populated Ident.Builder instance
+     */
+
+    public Ident.Builder newIdentBuilder()
+    {
+        Ident.Builder idb = Ident.newBuilder();
+
+        List<String> addressLines = new ArrayList<>();
+
+        if (addressLine1 != null) {
+            addressLines.add(addressLine1);
+        }
+        if (addressLine2 != null) {
+            addressLines.add(addressLine2);
+        }
+        if (addressLine3 != null) {
+            addressLines.add(addressLine3);
+        }
+
+        PostalAddress.Builder postalAddressBuilder = PostalAddress.newBuilder()
+                .setLanguageCode("en") /// TODO
+                .addAllAddressLines(addressLines);
+
+        if (region != null) {
+            postalAddressBuilder.setRegionCode(region);
+        }
+
+        if (province != null) {
+            postalAddressBuilder.setAdministrativeArea(province);
+        }
+
+        if (postalCode != null) {
+            postalAddressBuilder.setPostalCode(postalCode);
+        }
+
+        if (localAdministrativeAuthority != null) {
+            postalAddressBuilder.setAdministrativeArea(localAdministrativeAuthority);
+        }
+
+        if (city != null) {
+            postalAddressBuilder.setLocality(city);
+        }
+
+        PostalAddress postalAddress = postalAddressBuilder.build();
+
+        if (UIN != null) {
+            idb.setUIN(UIN.toString());
+        }
+        if (fullName != null) {
+            idb.setFullName(fullName);
+        }
+
+        idb.setPostalAddress(postalAddress);
+        idb.setGender(getGender());
+
+        if (givenName != null) {
+            idb.setGivenName(givenName);
+        }
+        if (surName != null) {
+            idb.setSurName(surName);
+        }
+        if (placeOfBirth != null) {
+            idb.setPlaceOfBirth(placeOfBirth);
+        }
+
+        if (dateOfBirth != null) {
+            Dat dobProto = Dat.newBuilder()
+                    .setYear(dateOfBirth.getYear())
+                    .setMonth(dateOfBirth.getMonthValue())
+                    .setDay(dateOfBirth.getDayOfMonth())
+                    .build();
+            idb.setDateOfBirth(dobProto);
+        }
+
+        try {
+
+            for (Map.Entry<String, Extras> melem : mbuilde.entrySet()) {
+                String fieldName = melem.getKey();
+                Extras extra = melem.getValue();
+                Field field = IdentFieldsConstraint.class.getDeclaredField(fieldName);
+                Object fieldValue = field.get(this);
+
+                if (fieldValue != null) {
+                    if (extra.isVisible()) {
+                        idb.addPubExtra(KV.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
+                    } else {
+                        idb.addPrivExtra(KV.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
+                    }
+                }
+            }
+
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // only goes here if there is incorrectly spelled
+            // member field
+        }
+
+        return idb;
     }
 }

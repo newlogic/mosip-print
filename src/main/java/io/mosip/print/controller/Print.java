@@ -48,7 +48,6 @@ public class Print {
 	@PostMapping(path = "/callback/notifyPrint", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "/v1/print/print/callback/notifyPrint", topic = "${mosip.event.topic}")
 	public ResponseEntity<Object> handleSubscribeEvent(@RequestBody EventModel eventModel) throws Exception {
-		String publishedOn = eventModel.getPublishedOn();
 		String credential = eventModel.getEvent().getData().get("credential").toString();
 		String ecryptionPin = eventModel.getEvent().getData().get("protectionKey").toString();
 		String decodedCrdential = cryptoCoreUtil.decrypt(credential);

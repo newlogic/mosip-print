@@ -65,6 +65,15 @@ public class IDPassliteConfig {
     private String storePrefix;
     private String storePassword;
     private String keyPassword;
+    private int expireYears;
+
+    public int getExpireYears() {
+        return expireYears;
+    }
+
+    public void setExpireYears(int expireYears) {
+        this.expireYears = expireYears;
+    }
 
     public String getP12File() {
         return p12File;

@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.idpass.lite.IDPassReaderComponent;
-import org.idpass.lite.SessionData;
+import org.idpass.lite.IDPassLiteDTO;
 import org.joda.time.DateTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -43,12 +43,10 @@ import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.pdfgenerator.exception.PDFGeneratorException;
 import io.mosip.kernel.core.qrcodegenerator.exception.QrcodeGenerationException;
-import io.mosip.kernel.core.qrcodegenerator.spi.QrCodeGenerator;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.kernel.core.websub.spi.PublisherClient;
 import io.mosip.kernel.pdfgenerator.itext.constant.PDFGeneratorExceptionCodeConstant;
-import io.mosip.kernel.qrcode.generator.zxing.constant.QrVersion;
 import io.mosip.print.constant.ApiName;
 import io.mosip.print.constant.CardType;
 import io.mosip.print.constant.EventId;
@@ -274,7 +272,7 @@ public class PrintServiceImpl implements PrintService{
 			byte[] textFileByte = createTextFile(decryptedJson.toString());
 			byteMap.put(UIN_TEXT_FILE, textFileByte);
 
-			SessionData sd = setQrCode(decryptedJson.toString(), attributes, encryptionPin);
+			IDPassLiteDTO sd = setQrCode(decryptedJson.toString(), attributes, encryptionPin);
 			boolean isQRcodeSet = sd.isResult();
 			if (!isQRcodeSet) {
 				printLogger.debug(LoggerFileConstant.SESSIONID.toString(),
@@ -522,7 +520,7 @@ public class PrintServiceImpl implements PrintService{
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
-	private SessionData setQrCode(String qrString, Map<String, Object> attributes, String pincode)
+	private IDPassLiteDTO setQrCode(String qrString, Map<String, Object> attributes, String pincode)
 			throws QrcodeGenerationException, IOException {
 		boolean isQRCodeSet = false;
 		JSONObject qrJsonObj = JsonUtil.objectMapperReadValue(qrString, JSONObject.class);
@@ -534,7 +532,7 @@ public class PrintServiceImpl implements PrintService{
 		// Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 		// String printTextFileString = gson.toJson(textFileJson);
 		String photob64 = (String)attributes.get("ApplicantPhoto");
-		SessionData sd = idpassQrCodeGenerator.generateQrCode(qrJsonObj.toString(), photob64, pincode);
+		IDPassLiteDTO sd = idpassQrCodeGenerator.generateQrCode(qrJsonObj.toString(), photob64, pincode);
 		byte[] qrCodeBytes = sd.getQrCodeBytes();
 		if (qrCodeBytes != null) {
 			String imageString = CryptoUtil.encodeBase64String(qrCodeBytes);
