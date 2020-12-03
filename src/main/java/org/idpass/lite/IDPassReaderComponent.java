@@ -43,7 +43,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,9 +62,7 @@ import static io.mosip.print.service.impl.PrintServiceImpl.DATETIME_PATTERN;
 @Component
 public class IDPassReaderComponent
 {
-    public IDPassReader reader;
-    byte[] m_svg;
-    IdentFieldsConstraint m_idfc = null;
+    public static IDPassReader reader;
 
     @Autowired
     private PDFGenerator pdfGenerator;
@@ -82,10 +79,6 @@ public class IDPassReaderComponent
     @Value("${mosip.registration.processor.print.service.uincard.signature.reason}")
     private String reason;
 
-    private String issuanceDate;
-    private String facePhotob64;
-    private String protk;
-
     final private static String IDPASSEXTRA_AGE = "Age";
     final private static String IDPASSEXTRA_PHONE = "Phone";
     final private static String IDPASSEXTRA_CNIENUMBER = "CNIE Number";
@@ -93,32 +86,7 @@ public class IDPassReaderComponent
     final private static String IDPASSEXTRA_GUARDIANID = "Guardian UIN";
     final private static String IDPASSEXTRA_ID = "ID";
 
-    public String getProtk() {
-        return protk;
-    }
-
-    public void setProtk(String protk) {
-        this.protk = protk;
-    }
-
     ObjectMapper mapper = new ObjectMapper();
-
-    public LocalDate getIssuanceDateAsLocalDate() {
-        ZonedDateTime zdt = ZonedDateTime.parse(issuanceDate);
-        LocalDate ld = zdt.toLocalDate();
-        return ld;
-    }
-
-    public String getIssuanceDate() {
-        ZonedDateTime zdt = ZonedDateTime.parse(issuanceDate);
-        LocalDate ld = zdt.toLocalDate();
-        System.out.println(ld.format(DateTimeFormatter.ofPattern("yyyy/MM/d")));
-        return issuanceDate;
-    }
-
-    public void setIssuanceDate(String issuanceDate) {
-        this.issuanceDate = issuanceDate;
-    }
 
     /**
      * Instantiates IDPassReader reader with a particular configuration
@@ -129,14 +97,16 @@ public class IDPassReaderComponent
     public IDPassReaderComponent(IDPassliteConfig config)
             throws IDPassException, IOException
     {
-        InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
+        if (reader == null) {
+            InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
 
-        // Initialize reader
-        reader = new IDPassReader(
-                config.getStorePrefix(), is,
-                config.getStorePassword(), config.getKeyPassword());
+            // Initialize reader
+            reader = new IDPassReader(
+                    config.getStorePrefix(), is,
+                    config.getStorePassword(), config.getKeyPassword());
 
-        reader.setDetailsVisible(config.getVisibleFields());
+            reader.setDetailsVisible(config.getVisibleFields());
+        }
     }
 
     /**
@@ -148,14 +118,16 @@ public class IDPassReaderComponent
      * @param photob64 A facial photo image
      * @return Returns PNG QR code of the generated IDPASS LITE card
      */
-    public byte[] generateQrCode(String cs, String photob64)
+    public SessionData generateQrCode(String cs, String photob64, String pincode)
             throws IOException
     {
-        m_idfc = null;
-        try {
-            m_idfc = (IdentFieldsConstraint) IdentFields.parse(cs, IdentFieldsConstraint.class);
+        SessionData ret = new SessionData();
+        IdentFieldsConstraint idfc = null;
 
-            if (m_idfc == null || !m_idfc.isValid()) { // in terms of identfieldsconstraint.json
+        try {
+            idfc = (IdentFieldsConstraint) IdentFields.parse(cs, IdentFieldsConstraint.class);
+            ret.setIdfc(idfc);
+            if (idfc == null || !idfc.isValid()) { // in terms of identfieldsconstraint.json
                 return null;
             }
 
@@ -164,42 +136,42 @@ public class IDPassReaderComponent
         }
 
         List<String> addressLines = new ArrayList<>();
-        if (m_idfc.getAddressLine1() != null) {
-            addressLines.add(m_idfc.getAddressLine1());
+        if (idfc.getAddressLine1() != null) {
+            addressLines.add(idfc.getAddressLine1());
         }
-        if (m_idfc.getAddressLine2() != null) {
-            addressLines.add(m_idfc.getAddressLine2());
+        if (idfc.getAddressLine2() != null) {
+            addressLines.add(idfc.getAddressLine2());
         }
-        if (m_idfc.getAddressLine3() != null) {
-            addressLines.add(m_idfc.getAddressLine3());
+        if (idfc.getAddressLine3() != null) {
+            addressLines.add(idfc.getAddressLine3());
         }
 
         Ident.Builder identBuilder = Ident.newBuilder()
-                .setPin(protk);
+                .setPin(pincode);
 
         /// TODO: Use Field instrospection to simplify these if check checks
-        if (m_idfc.getAge() != null) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_AGE).setKey(m_idfc.getAge().toString()));
+        if (idfc.getAge() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_AGE).setKey(idfc.getAge().toString()));
         }
 
-        if (m_idfc.getPhone() != null) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_PHONE).setKey(m_idfc.getPhone()));
+        if (idfc.getPhone() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_PHONE).setKey(idfc.getPhone()));
         }
 
-        if (m_idfc.getCnieNumber() != null) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_CNIENUMBER).setKey(m_idfc.getCnieNumber().toString()));
+        if (idfc.getCnieNumber() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_CNIENUMBER).setKey(idfc.getCnieNumber().toString()));
         }
 
-        if (m_idfc.getParentOrGuardianName() != null) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANNAME).setKey(m_idfc.getParentOrGuardianName()));
+        if (idfc.getParentOrGuardianName() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANNAME).setKey(idfc.getParentOrGuardianName()));
         }
 
-        if (m_idfc.getParentOrGuardianRIDorUIN() != null) {
-            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANID).setKey(m_idfc.getParentOrGuardianRIDorUIN().toString()));
+        if (idfc.getParentOrGuardianRIDorUIN() != null) {
+            identBuilder.addPrivExtra(KV.newBuilder().setValue(IDPASSEXTRA_GUARDIANID).setKey(idfc.getParentOrGuardianRIDorUIN().toString()));
         }
 
-        if (m_idfc.getId() != null) {
-            identBuilder.addPubExtra(KV.newBuilder().setValue(IDPASSEXTRA_ID).setKey(m_idfc.getId().toString()));
+        if (idfc.getId() != null) {
+            identBuilder.addPubExtra(KV.newBuilder().setValue(IDPASSEXTRA_ID).setKey(idfc.getId().toString()));
         }
 
         String imageType = photob64.split(",")[0];
@@ -210,12 +182,12 @@ public class IDPassReaderComponent
 
         if (photo != null) {
             identBuilder.setPhoto(ByteString.copyFrom(photo));
-            facePhotob64 = CryptoUtil.encodeBase64String(photo);
+            ret.setFacePhotob64(CryptoUtil.encodeBase64String(photo));
         }
 
         /* Populate Ident fields from idf object */
 
-        LocalDate dob = m_idfc.getDateOfBirth();
+        LocalDate dob = idfc.getDateOfBirth();
         Dat dobProto = Dat.getDefaultInstance();
 
         if (dob != null) {
@@ -227,60 +199,60 @@ public class IDPassReaderComponent
         }
 
         List<String> addrLines = new ArrayList<>();
-        if (m_idfc.getAddressLine1() != null) {
-            addrLines.add(m_idfc.getAddressLine1());
+        if (idfc.getAddressLine1() != null) {
+            addrLines.add(idfc.getAddressLine1());
         }
-        if (m_idfc.getAddressLine2() != null) {
-            addrLines.add(m_idfc.getAddressLine2());
+        if (idfc.getAddressLine2() != null) {
+            addrLines.add(idfc.getAddressLine2());
         }
-        if (m_idfc.getAddressLine3() != null) {
-            addrLines.add(m_idfc.getAddressLine3());
+        if (idfc.getAddressLine3() != null) {
+            addrLines.add(idfc.getAddressLine3());
         }
 
         PostalAddress.Builder postalAddressBuilder = PostalAddress.newBuilder()
                 .setLanguageCode("en") /// TODO
                 .addAllAddressLines(addrLines);
 
-        if (m_idfc.getRegion() != null) {
-            postalAddressBuilder.setRegionCode(m_idfc.getRegion());
+        if (idfc.getRegion() != null) {
+            postalAddressBuilder.setRegionCode(idfc.getRegion());
         }
 
-        if (m_idfc.getProvince() != null) {
-           postalAddressBuilder.setAdministrativeArea(m_idfc.getProvince());
+        if (idfc.getProvince() != null) {
+           postalAddressBuilder.setAdministrativeArea(idfc.getProvince());
         }
 
-        if (m_idfc.getPostalCode() != null) {
-            postalAddressBuilder.setPostalCode(m_idfc.getPostalCode());
+        if (idfc.getPostalCode() != null) {
+            postalAddressBuilder.setPostalCode(idfc.getPostalCode());
         }
 
-        if (m_idfc.getLocalAdministrativeAuthority() != null) {
-            postalAddressBuilder.setAdministrativeArea(m_idfc.getLocalAdministrativeAuthority());
+        if (idfc.getLocalAdministrativeAuthority() != null) {
+            postalAddressBuilder.setAdministrativeArea(idfc.getLocalAdministrativeAuthority());
         }
 
-        if (m_idfc.getCity() != null) {
-            postalAddressBuilder.setLocality(m_idfc.getCity());
+        if (idfc.getCity() != null) {
+            postalAddressBuilder.setLocality(idfc.getCity());
         }
 
         PostalAddress postalAddress = postalAddressBuilder.build();
 
-        if (m_idfc.getUIN() != null) {
-            identBuilder.setUIN(m_idfc.getUIN());
+        if (idfc.getUIN() != null) {
+            identBuilder.setUIN(idfc.getUIN());
         }
-        if (m_idfc.getFullName() != null) {
-            identBuilder.setFullName(m_idfc.getFullName());
+        if (idfc.getFullName() != null) {
+            identBuilder.setFullName(idfc.getFullName());
         }
 
         identBuilder.setPostalAddress(postalAddress);
-        identBuilder.setGender(m_idfc.getGender());
+        identBuilder.setGender(idfc.getGender());
 
-        if (m_idfc.getGivenName() != null) {
-            identBuilder.setGivenName(m_idfc.getGivenName());
+        if (idfc.getGivenName() != null) {
+            identBuilder.setGivenName(idfc.getGivenName());
         }
-        if (m_idfc.getSurName() != null) {
-            identBuilder.setSurName(m_idfc.getSurName());
+        if (idfc.getSurName() != null) {
+            identBuilder.setSurName(idfc.getSurName());
         }
-        if (m_idfc.getPlaceOfBirth() != null) {
-            identBuilder.setPlaceOfBirth(m_idfc.getPlaceOfBirth());
+        if (idfc.getPlaceOfBirth() != null) {
+            identBuilder.setPlaceOfBirth(idfc.getPlaceOfBirth());
         }
 
         if (dob != null) {
@@ -296,12 +268,13 @@ public class IDPassReaderComponent
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ImageIO.write(bi, "png", bos);
             qrcodeId = bos.toByteArray();
-            m_svg = card.asQRCodeSVG().getBytes(StandardCharsets.UTF_8);
+            ret.setQrCodeBytes(qrcodeId);
+            ret.setSvg(card.asQRCodeSVG().getBytes(StandardCharsets.UTF_8));
         } catch (IOException | IDPassException e) {
             return null;
         }
 
-        return  qrcodeId;
+        return  ret;
     }
 
     /**
@@ -310,10 +283,11 @@ public class IDPassReaderComponent
      * @throws IOException Standard exception
      */
 
-    public byte[] editorGenerate()
+    public byte[] editorGenerate(SessionData sd)
             throws IOException
     {
         byte[] pdfbytes = null;
+        IdentFieldsConstraint m_idfc = sd.getIdfc();
 
         ObjectNode front = mapper.createObjectNode();
         front.put("identification_number",m_idfc.getUIN());
@@ -323,13 +297,13 @@ public class IDPassReaderComponent
         if (m_idfc.getDateOfBirth() != null) { /// TODO: generalized these 'if' checks
             front.put("birth_date", m_idfc.getDateOfBirth().format(formatter));
         }
-        String issue_date = getIssuanceDateAsLocalDate().format(formatter);
+        String issue_date = sd.getIssuanceDate(formatter);
         front.put("issue_date",issue_date);
-        LocalDate exp = getIssuanceDateAsLocalDate().plusYears(10);
-        front.put("expiry_date", exp.format(formatter));
-        front.put("qrcode", "data:image/jpeg;base64," + facePhotob64);
+        String exp = sd.getIssuanceDate(formatter,10);
+        front.put("expiry_date", exp);
+        front.put("qrcode", "data:image/jpeg;base64," + sd.getFacePhotob64());
 
-        String svgqrcode = CryptoUtil.encodeBase64String(m_svg);
+        String svgqrcode = CryptoUtil.encodeBase64String(sd.getSvg());
 
         ObjectNode back = mapper.createObjectNode();
         back.put("qrcode", "data:image/svg+xml;base64," + svgqrcode);
@@ -374,13 +348,13 @@ public class IDPassReaderComponent
      * @throws ApisResourceAccessException standard exception
      */
 
-    public byte[] generateUinCard(InputStream in, UinCardType type, String password)
+    public byte[] generateUinCard(InputStream in, UinCardType type, String password, SessionData sd)
             throws ApisResourceAccessException
     {
         byte[] pdfSignatured=null;
         try {
             // Calls editor.idpass.org REST API to generate initial PDF
-            byte[] pdfbuf = editorGenerate();
+            byte[] pdfbuf = editorGenerate(sd);
             Path tmp1 = Files.createTempFile(null, null);
             OutputStream tmp1os = new FileOutputStream(tmp1.toFile());
             tmp1os.write(pdfbuf);

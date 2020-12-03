@@ -4,11 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.idpass.lite.IDPassReaderComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,9 +34,6 @@ public class Print {
 	@Autowired
 	CryptoCoreUtil cryptoCoreUtil;
 
-    @Autowired
-    private IDPassReaderComponent idpassQrCodeGenerator;
-
 	/**
 	 * Gets the file.
 	 *
@@ -54,8 +49,6 @@ public class Print {
 	@PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "/v1/print/print/callback/notifyPrint", topic = "${mosip.event.topic}")
 	public ResponseEntity<Object> handleSubscribeEvent(@RequestBody EventModel eventModel) throws Exception {
 		String publishedOn = eventModel.getPublishedOn();
-		idpassQrCodeGenerator.setIssuanceDate(publishedOn);
-		idpassQrCodeGenerator.setProtk(eventModel.getEvent().getData().get("protectionKey").toString());
 		String credential = eventModel.getEvent().getData().get("credential").toString();
 		String ecryptionPin = eventModel.getEvent().getData().get("protectionKey").toString();
 		String decodedCrdential = cryptoCoreUtil.decrypt(credential);
