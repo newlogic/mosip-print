@@ -3,6 +3,8 @@ package org.idpass.lite;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.protobuf.ByteString;
 import io.mosip.kernel.core.pdfgenerator.exception.PDFGeneratorException;
 import io.mosip.kernel.core.pdfgenerator.spi.PDFGenerator;
@@ -38,11 +40,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.file.FileSystem;
 
 import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
 import org.springframework.util.LinkedMultiValueMap;
@@ -59,6 +63,13 @@ import static io.mosip.print.service.impl.PrintServiceImpl.DATETIME_PATTERN;
 @Component
 public class IDPassReaderComponent
 {
+    /*
+    In-memory file system for faster creation of temporary files
+     */
+    private static FileSystem memfs = Jimfs.newFileSystem(Configuration.unix());
+    private static Path signaturePage;
+    private static Path mempath;
+
     public static IDPassReader reader;
 
     @Autowired
@@ -96,6 +107,18 @@ public class IDPassReaderComponent
                     config.getStorePassword(), config.getKeyPassword());
 
             reader.setDetailsVisible(config.getVisibleFields());
+
+            /*
+            In-memory file system is used to construct the 3-pages pdf
+            to be send for signing
+             */
+            Path jimPath = memfs.getPath("");
+            Path sigpage = jimPath.resolve("signaturepage.pdf");
+            byte[] sig = IDPassReaderComponent.class.getClassLoader()
+                .getResourceAsStream("signaturepage.pdf").readAllBytes();
+            Files.write(sigpage, sig);
+            signaturePage = jimPath.resolve("signaturepage.pdf");
+            mempath = memfs.getPath("");
         }
     }
 
@@ -238,15 +261,18 @@ public class IDPassReaderComponent
         try {
             // Calls editor.idpass.org REST API to generate initial PDF
             byte[] pdfbuf = editorGenerate(sd);
-            Path tmp1 = Files.createTempFile(null, null);
-            OutputStream tmp1os = new FileOutputStream(tmp1.toFile());
-            tmp1os.write(pdfbuf);
+            Instant instant = java.time.Instant.now();
+            long es = instant.getEpochSecond();
+            int en = instant.getNano();
+            String tmp = "card" + es + "-" + en + ".pdf";
+            Path unsignedPdf = mempath.resolve(tmp);
+            Files.write(unsignedPdf, pdfbuf); // write to in-memory fs
 
             List<URL> pdfList = new ArrayList<>();
-            pdfList.add(tmp1.toUri().toURL());
-            pdfList.add(IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf"));
+            pdfList.add(unsignedPdf.toUri().toURL());
+            pdfList.add(signaturePage.toUri().toURL());
             byte[] threepages = pdfGenerator.mergePDF(pdfList);
-            tmp1.toFile().delete();
+            Files.deleteIfExists(unsignedPdf);
 
             PDFSignatureRequestDto request = new PDFSignatureRequestDto(5, 2, 232, 72, reason, 3, password);
 
