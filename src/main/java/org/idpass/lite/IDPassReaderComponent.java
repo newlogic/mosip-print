@@ -67,7 +67,7 @@ public class IDPassReaderComponent
     In-memory file system for faster creation of temporary files
      */
     private static FileSystem memfs = Jimfs.newFileSystem(Configuration.unix());
-    private static Path signaturePage;
+    private static URL signaturePageURL;
     private static Path mempath;
 
     public static IDPassReader reader;
@@ -113,11 +113,7 @@ public class IDPassReaderComponent
             to be send for signing
              */
             Path jimPath = memfs.getPath("");
-            Path sigpage = jimPath.resolve("signaturepage.pdf");
-            byte[] sig = IDPassReaderComponent.class.getClassLoader()
-                .getResourceAsStream("signaturepage.pdf").readAllBytes();
-            Files.write(sigpage, sig);
-            signaturePage = jimPath.resolve("signaturepage.pdf");
+            signaturePageURL = IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf");
             mempath = memfs.getPath("");
         }
     }
@@ -270,7 +266,7 @@ public class IDPassReaderComponent
 
             List<URL> pdfList = new ArrayList<>();
             pdfList.add(unsignedPdf.toUri().toURL());
-            pdfList.add(signaturePage.toUri().toURL());
+            pdfList.add(signaturePageURL);
             byte[] threepages = pdfGenerator.mergePDF(pdfList);
             Files.deleteIfExists(unsignedPdf);
 
