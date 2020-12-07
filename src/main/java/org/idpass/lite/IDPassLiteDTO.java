@@ -1,20 +1,21 @@
 package org.idpass.lite;
 
 /**
- * The SessionData member fields are the stateful
- * data values per request. A SessionData object
- * instance get passed across calls to IDPassReaderComponent
+ * The IDPassLiteDTO member fields are the stateful
+ * data values computed, per request. This object
+ * instance gets returned and passed across calls to
+ * IDPassReaderComponent
  */
 
 public class IDPassLiteDTO {
 
     private boolean result;
 
-    private byte[] svg;
-    private IdentFieldsConstraint idfc = null;
+    private byte[] svg; // ID PASS Lite QR code in SVG format
+    private IdentFieldsConstraint idfc = null; // The constrained extracted fields
 
-    private String facePhotob64;
-    private byte[] qrCodeBytes;
+    private String facePhotob64; // identity face photo in base64 format
+    private byte[] qrCodeBytes; // ID PASS Lite QR code in bytes[] format
 
     /* getter/setter functions */
 

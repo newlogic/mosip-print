@@ -67,8 +67,9 @@ public class IDPassReaderComponent
     In-memory file system for faster creation of temporary files
      */
     private static FileSystem memfs = Jimfs.newFileSystem(Configuration.unix());
-    private static URL signaturePageURL;
     private static Path mempath;
+
+    private static URL signaturePageURL;
 
     public static IDPassReader reader;
 
@@ -112,7 +113,6 @@ public class IDPassReaderComponent
             In-memory file system is used to construct the 3-pages pdf
             to be send for signing
              */
-            Path jimPath = memfs.getPath("");
             signaturePageURL = IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf");
             mempath = memfs.getPath("");
         }
@@ -120,12 +120,14 @@ public class IDPassReaderComponent
 
     /**
      * Returns a PNG image QR code representation as a byte[] array,
-     * from the given inputs:
+     * from the given inputs. The returned values are wrapped in a
+     * DTO object to collate other computed values needed and pass
+     * through other functions.
      *
      * @param cs The credential subject input json
      * @param pincode The IDPASS LITE pin code
      * @param photob64 A facial photo image
-     * @return Returns PNG QR code of the generated IDPASS LITE card
+     * @return Returns Object data holder of computed values
      */
     public IDPassLiteDTO generateQrCode(String cs, String photob64, String pincode)
             throws IOException {
@@ -180,6 +182,7 @@ public class IDPassReaderComponent
 
     /**
      * Call editor.idpass.org to generate ID PASS Lite PDF card
+     * @param sd Session ID PASS Lite computed values holder
      * @return Returns pdf bytes array
      * @throws IOException Standard exception
      */
@@ -246,6 +249,7 @@ public class IDPassReaderComponent
      * @param in Template. Not used here
      * @param type Card type
      * @param password password
+     * @param sd Session data computed values holder
      * @return Returns pdf bytes of signed pdf
      * @throws ApisResourceAccessException standard exception
      */
