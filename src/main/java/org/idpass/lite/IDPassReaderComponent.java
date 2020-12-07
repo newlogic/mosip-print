@@ -40,7 +40,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +66,7 @@ public class IDPassReaderComponent
     In-memory file system for faster creation of temporary files
      */
     private static FileSystem memfs = Jimfs.newFileSystem(Configuration.unix());
-    private static Path mempath;
+    private static Path pdfDir; // in-memory path for temporary pdf file saves
 
     private static URL signaturePageURL;
 
@@ -114,7 +113,8 @@ public class IDPassReaderComponent
             to be send for signing
              */
             signaturePageURL = IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf");
-            mempath = memfs.getPath("");
+            pdfDir = memfs.getPath("/pdf");
+            Files.createDirectory(pdfDir);
         }
     }
 
@@ -261,11 +261,7 @@ public class IDPassReaderComponent
         try {
             // Calls editor.idpass.org REST API to generate initial PDF
             byte[] pdfbuf = editorGenerate(sd);
-            Instant instant = java.time.Instant.now();
-            long es = instant.getEpochSecond();
-            int en = instant.getNano();
-            String tmp = "card" + es + "-" + en + ".pdf";
-            Path unsignedPdf = mempath.resolve(tmp);
+            Path unsignedPdf = Files.createTempFile(pdfDir, null, null);
             Files.write(unsignedPdf, pdfbuf); // write to in-memory fs
 
             List<URL> pdfList = new ArrayList<>();
