@@ -1,12 +1,18 @@
 package io.mosip.print.controller;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.idpass.lite.IDPassliteConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +29,9 @@ import io.mosip.print.util.CryptoCoreUtil;
 @RestController
 @RequestMapping(value = "/print")
 public class Print {
+
+	@Autowired
+	IDPassliteConfig m_config;
 
 	/** The printservice. */
 	@Autowired
@@ -47,7 +56,7 @@ public class Print {
 	 */
 	@PostMapping(path = "/callback/notifyPrint", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "/v1/print/print/callback/notifyPrint", topic = "${mosip.event.topic}")
-	public ResponseEntity<Object> handleSubscribeEvent(@RequestBody EventModel eventModel) throws Exception {
+	public ResponseEntity<String> handleSubscribeEvent(@RequestBody EventModel eventModel) throws Exception {
 		String credential = eventModel.getEvent().getData().get("credential").toString();
 		String ecryptionPin = eventModel.getEvent().getData().get("protectionKey").toString();
 		String decodedCrdential = cryptoCoreUtil.decrypt(credential);
@@ -66,10 +75,13 @@ public class Print {
 		 * ); OutputStream os = new FileOutputStream(pdfFile); os.write(pdfbytes);
 		 * os.close();
 		 */
-		return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/pdf"))
-				.header("Content-Disposition", "attachment; filename=\"" + "uinCard" + ".pdf\"")
-				.body((Object)resource);
 
+		LocalDateTime ldt = LocalDateTime.now();
+		String cardfile = m_config.getCardDir() + ldt.toString() + ".pdf";
+		OutputStream idCard = new FileOutputStream(new File(cardfile));
+		idCard.write(pdfbytes);
+
+		return new ResponseEntity<>("successfully printed", HttpStatus.OK);
 	}
 
 	private String getSignature(String sign, String crdential) {

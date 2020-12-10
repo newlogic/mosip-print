@@ -66,6 +66,15 @@ public class IDPassliteConfig {
     private String storePassword;
     private String keyPassword;
     private int expireYears;
+    private String cardDir;
+
+    public String getCardDir() {
+        return cardDir;
+    }
+
+    public void setCardDir(String cardDir) {
+        this.cardDir = cardDir;
+    }
 
     public int getExpireYears() {
         return expireYears;

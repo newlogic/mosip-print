@@ -303,7 +303,7 @@ public class PrintServiceImpl implements PrintService{
 
 			byte[] uinbyte = attributes.get("UIN").toString().getBytes();
 			byteMap.put("UIN", uinbyte);
-			///printStatusUpdate(requestId, pdfbytes, credentialType); /// TODO: get partner.id
+			printStatusUpdate(requestId, pdfbytes, credentialType);
 			isTransactionSuccessful = true;
 
 		} catch (VidCreationException e) {
