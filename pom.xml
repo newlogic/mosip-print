@@ -228,7 +228,7 @@
         <dependency>
             <groupId>io.github.idpass</groupId>
             <artifactId>idpass-lite-java</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>

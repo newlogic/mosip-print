@@ -3,8 +3,6 @@ package org.idpass.lite;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import com.google.protobuf.ByteString;
 import io.mosip.kernel.core.pdfgenerator.exception.PDFGeneratorException;
 import io.mosip.kernel.core.pdfgenerator.spi.PDFGenerator;
@@ -62,12 +60,6 @@ import static io.mosip.print.service.impl.PrintServiceImpl.DATETIME_PATTERN;
 @Component
 public class IDPassReaderComponent
 {
-    /*
-    In-memory file system for faster creation of temporary files
-     */
-    private static FileSystem memfs = Jimfs.newFileSystem(Configuration.unix());
-    private static Path pdfDir; // in-memory path for temporary pdf file saves
-
     private static URL signaturePageURL;
 
     public static IDPassReader reader;
@@ -108,13 +100,7 @@ public class IDPassReaderComponent
 
             reader.setDetailsVisible(config.getVisibleFields());
 
-            /*
-            In-memory file system is used to construct the 3-pages pdf
-            to be send for signing
-             */
             signaturePageURL = IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf");
-            pdfDir = memfs.getPath("/pdf");
-            Files.createDirectory(pdfDir);
         }
     }
 
@@ -261,14 +247,15 @@ public class IDPassReaderComponent
         try {
             // Calls editor.idpass.org REST API to generate initial PDF
             byte[] pdfbuf = editorGenerate(sd);
-            Path unsignedPdf = Files.createTempFile(pdfDir, null, null);
-            Files.write(unsignedPdf, pdfbuf); // write to in-memory fs
+            Path tmp1 = Files.createTempFile(null,null);
+            OutputStream tmp1os = new FileOutputStream(tmp1.toFile());
+            tmp1os.write(pdfbuf);
 
             List<URL> pdfList = new ArrayList<>();
-            pdfList.add(unsignedPdf.toUri().toURL());
+            pdfList.add(tmp1.toUri().toURL());
             pdfList.add(signaturePageURL);
             byte[] threepages = pdfGenerator.mergePDF(pdfList);
-            Files.deleteIfExists(unsignedPdf);
+            tmp1.toFile().delete();
 
             PDFSignatureRequestDto request = new PDFSignatureRequestDto(5, 2, 232, 72, reason, 3, password);
 
