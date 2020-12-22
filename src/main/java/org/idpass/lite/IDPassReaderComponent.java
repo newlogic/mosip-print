@@ -133,7 +133,7 @@ public class IDPassReaderComponent
 
         Ident.Builder identBuilder = idfc.newIdentBuilder();
 
-        identBuilder.setPin(pincode);
+        identBuilder.setPin(/*pincode*/"1234");
 
         String imageType = photob64.split(",")[0];
         byte[] photo = CryptoUtil.decodeBase64(photob64.split(",")[1]);

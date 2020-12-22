@@ -202,12 +202,15 @@ public class IdentFields {
                         continue;
                     }
 
+                    /* skip check prefLangs for now
                     for (String pref : prefLangs) {
                         if (localizedValue.getLanguage().equals(pref)) {
                             addKeyValue(keyname, localizedValue.getValue());
                             break outer;
                         }
-                    }
+                    }*/
+
+                    addKeyValue(keyname, localizedValue.getValue());
                 }
                 break;
 
