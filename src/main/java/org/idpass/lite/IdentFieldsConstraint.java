@@ -54,6 +54,25 @@ public class IdentFieldsConstraint {
     private Number parentOrGuardianRIDorUIN;
     private Number id;
 
+    private String lastName;
+    private String firstName;
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
     /**
      * Additional pieces of information not in the
      * protobuf message CardDetails definition,
@@ -399,6 +418,12 @@ public class IdentFieldsConstraint {
         }
         if (surName != null) {
             idb.setSurName(surName);
+        }
+        if (firstName != null) {
+            idb.setGivenName(firstName);
+        }
+        if (lastName != null) {
+            idb.setSurName(lastName);
         }
         if (placeOfBirth != null) {
             idb.setPlaceOfBirth(placeOfBirth);
