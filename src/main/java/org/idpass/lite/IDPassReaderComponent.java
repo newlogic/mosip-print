@@ -198,12 +198,14 @@ public class IDPassReaderComponent
         byte[] pdfbytes = null;
         IdentFieldsConstraint m_idfc = sd.getIdfc();
 
+        Ident ident = m_idfc.getIDent();
+
         ObjectNode front = mapper.createObjectNode();
-        front.put("identification_number",m_idfc.getUIN());
+        front.put("identification_number", ident.getUIN());
         //front.put("full_name", m_idfc.getFullName());
-        front.put("surname", m_idfc.getSurName());
-        front.put("given_names", m_idfc.getGivenName());
-        front.put("sex",m_idfc.getGender() == 1 ? "Female" : "Male");
+        front.put("surname", ident.getSurName());
+        front.put("given_names", ident.getGivenName());
+        front.put("sex",ident.getGender() == 1 ? "Female" : "Male");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
         if (m_idfc.getDateOfBirth() != null) { /// TODO: generalized these 'if' checks
             front.put("birth_date", m_idfc.getDateOfBirth().format(formatter));

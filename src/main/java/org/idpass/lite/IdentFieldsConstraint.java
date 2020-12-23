@@ -25,6 +25,8 @@ import java.util.*;
 
 public class IdentFieldsConstraint {
 
+    private Ident.Builder idb;
+
     /**
      * These fields list names are the fields of interests to search for
      * in the input json. Its corresponding field type is the type
@@ -56,6 +58,10 @@ public class IdentFieldsConstraint {
 
     private String lastName;
     private String firstName;
+
+    public Ident getIDent() {
+        return idb.build();
+    }
 
     public String getLastName() {
         return lastName;
@@ -363,7 +369,7 @@ public class IdentFieldsConstraint {
 
     public Ident.Builder newIdentBuilder()
     {
-        Ident.Builder idb = Ident.newBuilder();
+        idb = Ident.newBuilder();
 
         List<String> addressLines = new ArrayList<>();
 
