@@ -200,7 +200,7 @@ public class IDPassReaderComponent
 
         ObjectNode front = mapper.createObjectNode();
         front.put("identification_number",m_idfc.getUIN());
-        front.put("full_name", m_idfc.getFullName());
+        //front.put("full_name", m_idfc.getFullName());
         front.put("surname", m_idfc.getSurName());
         front.put("given_names", m_idfc.getGivenName());
         front.put("sex",m_idfc.getGender() == 1 ? "Female" : "Male");
