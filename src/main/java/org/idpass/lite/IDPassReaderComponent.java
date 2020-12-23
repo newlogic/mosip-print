@@ -44,6 +44,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.FileSystem;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import com.github.jaiimageio.jpeg2000.impl.J2KImageReader;
 import org.springframework.util.LinkedMultiValueMap;
@@ -60,6 +64,10 @@ import static io.mosip.print.service.impl.PrintServiceImpl.DATETIME_PATTERN;
 @Component
 public class IDPassReaderComponent
 {
+    static private FileHandler fileTxt;
+    static private SimpleFormatter formatterTxt;
+    private final static Logger LOGGER = Logger.getLogger(IDPassReaderComponent.class.getName());
+
     private static URL signaturePageURL;
 
     public static IDPassReader reader;
@@ -91,6 +99,13 @@ public class IDPassReaderComponent
             throws IDPassException, IOException
     {
         if (reader == null) {
+
+            LOGGER.setLevel(Level.INFO);
+            fileTxt = new FileHandler("idpasslite.log", true);
+            formatterTxt = new SimpleFormatter();
+            fileTxt.setFormatter(formatterTxt);
+            LOGGER.addHandler(fileTxt);
+
             InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
 
             // Initialize reader
@@ -117,6 +132,10 @@ public class IDPassReaderComponent
      */
     public IDPassLiteDTO generateQrCode(String cs, String photob64, String pincode)
             throws IOException {
+
+        LOGGER.info(cs);
+        LOGGER.info(pincode);
+
         IDPassLiteDTO ret = new IDPassLiteDTO();
         IdentFieldsConstraint idfc = null;
 
