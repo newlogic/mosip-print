@@ -20,6 +20,8 @@ import io.mosip.print.service.PrintRestClientService;
 import io.mosip.registration.print.core.http.RequestWrapper;
 import io.mosip.registration.print.core.http.ResponseWrapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.api.proto.Certificate;
+import org.api.proto.Certificates;
 import org.api.proto.Ident;
 import org.idpass.lite.exceptions.IDPassException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.nio.file.FileSystem;
 import java.util.logging.FileHandler;
@@ -64,6 +67,7 @@ import static io.mosip.print.service.impl.PrintServiceImpl.DATETIME_PATTERN;
 @Component
 public class IDPassReaderComponent
 {
+    private Certificates certchain;
     static private FileHandler fileTxt;
     static private SimpleFormatter formatterTxt;
     private final static Logger LOGGER = Logger.getLogger(IDPassReaderComponent.class.getName());
@@ -114,6 +118,20 @@ public class IDPassReaderComponent
                     config.getStorePassword(), config.getKeyPassword());
 
             reader.setDetailsVisible(config.getVisibleFields());
+
+            byte[][] ret = IDPassHelper.readKeyStoreEntry(
+                    "rootcertificatesprivatekeys",
+                    "/root/src/print/src/main/resources/demokeys.cfg.p12",config.getStorePassword());
+            byte[] root_key = ret[0];
+
+            ret = IDPassHelper.readKeyStoreEntry(
+                    "intermedcertificatesprivatekeys",
+                    "/root/src/print/src/main/resources/demokeys.cfg.p12",config.getStorePassword());
+            byte[] intermed_key = ret[0];
+
+            byte[] verification_key = Arrays.copyOfRange(intermed_key, 32, 64);
+            Certificate childcert = IDPassReader.generateChildCertificate(root_key, verification_key);
+            certchain = Certificates.newBuilder().addCert(childcert).build();
 
             signaturePageURL = IDPassReaderComponent.class.getClassLoader().getResource("signaturepage.pdf");
         }
@@ -171,7 +189,7 @@ public class IDPassReaderComponent
         byte[] qrcodeId = null;
 
         try {
-            Card card = reader.newCard(ident, null);
+            Card card = reader.newCard(ident, certchain);
             BufferedImage bi = card.asQRCode();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ImageIO.write(bi, "png", bos);
