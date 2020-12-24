@@ -99,7 +99,8 @@ public class IdentFieldsConstraint {
         CNIENUMBER("CNIE Number",false),
         GUARDIANNAME("Guardian Name",false),
         GUARDIANID("Guardian UIN",false),
-        ID("ID",true);
+        ID("ID",true),
+        EMAIL("Email",false);
 
         private final String text;
         private final boolean visible;
@@ -136,6 +137,7 @@ public class IdentFieldsConstraint {
         put("parentOrGuardianName",Extras.GUARDIANNAME);
         put("parentOrGuardianRIDorUIN",Extras.GUARDIANID);
         put("id",Extras.ID);
+        put("email",Extras.EMAIL);
     }};
 
     public Number getId() {
