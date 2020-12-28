@@ -272,7 +272,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>${spring.boot.version}</version>
 				<configuration>
-					<executable>true</executable>
+					<executable>false</executable>
 					<layout>ZIP</layout>
 				</configuration>
 				<executions>
