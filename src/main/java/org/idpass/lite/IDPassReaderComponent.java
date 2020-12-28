@@ -20,13 +20,15 @@ import io.mosip.print.service.PrintRestClientService;
 import io.mosip.registration.print.core.http.RequestWrapper;
 import io.mosip.registration.print.core.http.ResponseWrapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.api.proto.Certificate;
+import org.idpass.lite.proto.Certificate;
 import org.api.proto.Certificates;
 import org.api.proto.Ident;
 import org.idpass.lite.exceptions.IDPassException;
+import org.idpass.lite.proto.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -110,24 +112,24 @@ public class IDPassReaderComponent
             fileTxt.setFormatter(formatterTxt);
             LOGGER.addHandler(fileTxt);
 
-            InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
+            File p12File = new ClassPathResource(config.getP12File()).getFile();
 
             // Initialize reader
             reader = new IDPassReader(
-                    config.getStorePrefix(), is,
+                    config.getStorePrefix(), new FileInputStream(p12File),
                     config.getStorePassword(), config.getKeyPassword());
 
             reader.setDetailsVisible(config.getVisibleFields());
 
-            byte[][] ret = IDPassHelper.readKeyStoreEntry(
+            byte[][] entry = IDPassHelper.readKeyStoreEntry(
                     "rootcertificatesprivatekeys",
-                    "/root/src/print/src/main/resources/demokeys.cfg.p12",config.getStorePassword());
-            byte[] root_key = ret[0];
+                    new FileInputStream(p12File),config.getStorePassword(), config.getKeyPassword());
+            byte[] root_key = entry[0];
 
-            ret = IDPassHelper.readKeyStoreEntry(
+            entry = IDPassHelper.readKeyStoreEntry(
                     "intermedcertificatesprivatekeys",
-                    "/root/src/print/src/main/resources/demokeys.cfg.p12",config.getStorePassword());
-            byte[] intermed_key = ret[0];
+                    new FileInputStream(p12File),config.getStorePassword(), config.getKeyPassword());
+            byte[] intermed_key = entry[0];
 
             byte[] verification_key = Arrays.copyOfRange(intermed_key, 32, 64);
             Certificate childcert = IDPassReader.generateChildCertificate(root_key, verification_key);
@@ -173,6 +175,7 @@ public class IDPassReaderComponent
         identBuilder.setPin(/*pincode*/"1234");
 
         String imageType = photob64.split(",")[0];
+        LOGGER.info(imageType);
         byte[] photo = CryptoUtil.decodeBase64(photob64.split(",")[1]);
         if (/* imageType.equals("data:image/x-jp2;base64") */ true) { /// TODO: Already raised this issue
             photo = convertJ2KToJPG(photo);
@@ -196,6 +199,7 @@ public class IDPassReaderComponent
             qrcodeId = bos.toByteArray();
             ret.setQrCodeBytes(qrcodeId);
             ret.setSvg(card.asQRCodeSVG().getBytes(StandardCharsets.UTF_8));
+            ret.setIdent(ident);
         } catch (IOException | IDPassException e) {
             return null;
         }
@@ -214,19 +218,21 @@ public class IDPassReaderComponent
             throws IOException
     {
         byte[] pdfbytes = null;
-        IdentFieldsConstraint m_idfc = sd.getIdfc();
-
-        Ident ident = m_idfc.getIDent();
+        Ident ident = sd.getIdent();
 
         ObjectNode front = mapper.createObjectNode();
         front.put("identification_number", ident.getUIN());
+        // TODO: Submitted editor.idpass.org feature request
+        // Description: https://drive.google.com/file/d/1ejz2hmMgi3iqNNT2Fppri3Et3GbXN9jK/view?usp=sharing
         //front.put("full_name", m_idfc.getFullName());
         front.put("surname", ident.getSurName());
         front.put("given_names", ident.getGivenName());
         front.put("sex",ident.getGender() == 1 ? "Female" : "Male");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/d"); /// TODO: move to config? or list of possible combinations
-        if (m_idfc.getDateOfBirth() != null) { /// TODO: generalized these 'if' checks
-            front.put("birth_date", m_idfc.getDateOfBirth().format(formatter));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(m_config.getDatePattern());
+        if (ident.hasDateOfBirth()) {
+            Date dob = ident.getDateOfBirth();
+            String dobStr = String.format("%d/%d/%d",dob.getYear(),dob.getMonth(),dob.getDay());
+            front.put("birth_date", dobStr);
         }
         LocalDate issuanceDate = LocalDate.now();
         String issue_date = issuanceDate.format(formatter);

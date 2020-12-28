@@ -67,6 +67,15 @@ public class IDPassliteConfig {
     private String keyPassword;
     private int expireYears;
     private String cardDir;
+    private String datePattern;
+
+    public String getDatePattern() {
+        return datePattern;
+    }
+
+    public void setDatePattern(String datePattern) {
+        this.datePattern = datePattern;
+    }
 
     public String getCardDir() {
         return cardDir;

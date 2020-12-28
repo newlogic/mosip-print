@@ -1,5 +1,7 @@
 package org.idpass.lite;
 
+import org.api.proto.Ident;
+
 /**
  * The IDPassLiteDTO member fields are the stateful
  * data values computed, per request. This object
@@ -9,6 +11,7 @@ package org.idpass.lite;
 
 public class IDPassLiteDTO {
 
+    private Ident ident;
     private boolean result;
 
     private byte[] svg; // ID PASS Lite QR code in SVG format
@@ -18,6 +21,14 @@ public class IDPassLiteDTO {
     private byte[] qrCodeBytes; // ID PASS Lite QR code in bytes[] format
 
     /* getter/setter functions */
+
+    public Ident getIdent() {
+        return ident;
+    }
+
+    public void setIdent(Ident ident) {
+        this.ident = ident;
+    }
 
     public boolean isResult() {
         return result;

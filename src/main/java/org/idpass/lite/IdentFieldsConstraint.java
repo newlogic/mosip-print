@@ -1,8 +1,8 @@
 package org.idpass.lite;
 
-import org.api.proto.Dat;
+import org.idpass.lite.proto.Date;
 import org.api.proto.Ident;
-import org.api.proto.KV;
+import org.idpass.lite.proto.Pair;
 import org.idpass.lite.proto.PostalAddress;
 
 import java.lang.reflect.Field;
@@ -13,7 +13,7 @@ import java.util.*;
 
 /**
  * The IdentFieldConstraint class is the input class
- * to the Ident class. The getter methods to each field
+ * to the Ident.Builder. The getter methods to each field
  * of interest should return the type expected by Ident
  * class. For example, 'gender' here is a String, but from the
  * perspective of usage as input into the 'Ident' builder
@@ -25,17 +25,12 @@ import java.util.*;
 
 public class IdentFieldsConstraint {
 
-    private Ident.Builder idb;
-
     /**
      * These fields list names are the fields of interests to search for
      * in the input json. Its corresponding field type is the type
      * constraint for that field.
      */
 
-    private String fullName;
-    private String surName;
-    private String givenName;
     private Number UIN;
     private String gender;
     private String placeOfBirth;
@@ -50,18 +45,14 @@ public class IdentFieldsConstraint {
     private Number age;
     private String phone;
     private String email;
-    private Number cnieNumber;
     private String localAdministrativeAuthority;
     private String parentOrGuardianName;
-    private Number parentOrGuardianRIDorUIN;
+    private Number parentOrGuardianRID;
+    private Number parentOrGuardianUIN;
     private Number id;
 
     private String lastName;
     private String firstName;
-
-    public Ident getIDent() {
-        return idb.build();
-    }
 
     public String getLastName() {
         return lastName;
@@ -91,14 +82,16 @@ public class IdentFieldsConstraint {
      *
      * Protobuf definitions:
      * https://github.com/idpass/idpass-lite/blob/newprotofields/lib/src/proto/idpasslite.proto
+     *
+     * The extras below are fields in PostalAddress protobuf message, for example purposes only.
      */
 
     enum Extras {
         AGE("Age",false),
         PHONE("Phone",false),
-        CNIENUMBER("CNIE Number",false),
         GUARDIANNAME("Guardian Name",false),
-        GUARDIANID("Guardian UIN",false),
+        GUARDIANUIN("Guardian UIN",false),
+        GUARDIANRID("Guardian RID",false),
         ID("ID",true),
         EMAIL("Email",false);
 
@@ -123,7 +116,7 @@ public class IdentFieldsConstraint {
     /**
      * This maps a member fields of this class to an associated
      * display string value in the map. For example,
-     * "CNIE Number" is the key and its value is from the "cnieNumber"
+     * "Email" is the key and its value is from the "email"
      * member field of this class instance.
      *
      * This is just to avoid the long repeated 'if' checks, when
@@ -133,9 +126,9 @@ public class IdentFieldsConstraint {
     private static Map<String, Extras> mbuilde = new HashMap<>() {{
         put("age", Extras.AGE);
         put("phone",Extras.PHONE);
-        put("cnieNumber",Extras.CNIENUMBER);
         put("parentOrGuardianName",Extras.GUARDIANNAME);
-        put("parentOrGuardianRIDorUIN",Extras.GUARDIANID);
+        put("parentOrGuardianRID",Extras.GUARDIANRID);
+        put("parentOrGuardianUIN",Extras.GUARDIANUIN);
         put("id",Extras.ID);
         put("email",Extras.EMAIL);
     }};
@@ -180,14 +173,6 @@ public class IdentFieldsConstraint {
         this.email = email;
     }
 
-    public Number getCnieNumber() {
-        return cnieNumber;
-    }
-
-    public void setCnieNumber(Number cnieNumber) {
-        this.cnieNumber = cnieNumber;
-    }
-
     public String getLocalAdministrativeAuthority() {
         return localAdministrativeAuthority;
     }
@@ -204,12 +189,20 @@ public class IdentFieldsConstraint {
         this.parentOrGuardianName = parentOrGuardianName;
     }
 
-    public Number getParentOrGuardianRIDorUIN() {
-        return parentOrGuardianRIDorUIN;
+    public Number getParentOrGuardianRID() {
+        return parentOrGuardianRID;
     }
 
-    public void setParentOrGuardianRIDorUIN(Number parentOrGuardianRIDorUIN) {
-        this.parentOrGuardianRIDorUIN = parentOrGuardianRIDorUIN;
+    public void setParentOrGuardianRID(Number parentOrGuardianRID) {
+        this.parentOrGuardianRID = parentOrGuardianRID;
+    }
+
+    public Number getParentOrGuardianUIN() {
+        return parentOrGuardianUIN;
+    }
+
+    public void setParentOrGuardianUIN(Number parentOrGuardianUIN) {
+        this.parentOrGuardianUIN = parentOrGuardianUIN;
     }
 
     /**
@@ -289,18 +282,6 @@ public class IdentFieldsConstraint {
 
     /* Getters methods */
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getSurName() {
-        return surName;
-    }
-
-    public String getGivenName() {
-        return givenName;
-    }
-
     public String getUIN() {
         return UIN != null ? UIN.toString() : null;
     }
@@ -371,7 +352,7 @@ public class IdentFieldsConstraint {
 
     public Ident.Builder newIdentBuilder()
     {
-        idb = Ident.newBuilder();
+        Ident.Builder idb = Ident.newBuilder();
 
         List<String> addressLines = new ArrayList<>();
 
@@ -414,19 +395,10 @@ public class IdentFieldsConstraint {
         if (UIN != null) {
             idb.setUIN(UIN.toString());
         }
-        if (fullName != null) {
-            idb.setFullName(fullName);
-        }
 
         idb.setPostalAddress(postalAddress);
         idb.setGender(getGender());
 
-        if (givenName != null) {
-            idb.setGivenName(givenName);
-        }
-        if (surName != null) {
-            idb.setSurName(surName);
-        }
         if (firstName != null) {
             idb.setGivenName(firstName);
         }
@@ -438,7 +410,7 @@ public class IdentFieldsConstraint {
         }
 
         if (dateOfBirth != null) {
-            Dat dobProto = Dat.newBuilder()
+            Date dobProto = Date.newBuilder()
                     .setYear(dateOfBirth.getYear())
                     .setMonth(dateOfBirth.getMonthValue())
                     .setDay(dateOfBirth.getDayOfMonth())
@@ -456,9 +428,9 @@ public class IdentFieldsConstraint {
 
                 if (fieldValue != null) {
                     if (extra.isVisible()) {
-                        idb.addPubExtra(KV.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
+                        idb.addPubExtra(Pair.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
                     } else {
-                        idb.addPrivExtra(KV.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
+                        idb.addPrivExtra(Pair.newBuilder().setKey(extra.toString()).setValue(fieldValue.toString()));
                     }
                 }
             }
