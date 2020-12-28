@@ -28,7 +28,6 @@ import org.idpass.lite.proto.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.nio.file.FileSystem;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -112,23 +110,24 @@ public class IDPassReaderComponent
             fileTxt.setFormatter(formatterTxt);
             LOGGER.addHandler(fileTxt);
 
-            File p12File = new ClassPathResource(config.getP12File()).getFile();
+            InputStream is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
 
             // Initialize reader
             reader = new IDPassReader(
-                    config.getStorePrefix(), new FileInputStream(p12File),
+                    config.getStorePrefix(), is,
                     config.getStorePassword(), config.getKeyPassword());
 
             reader.setDetailsVisible(config.getVisibleFields());
 
+            is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
             byte[][] entry = IDPassHelper.readKeyStoreEntry(
                     "rootcertificatesprivatekeys",
-                    new FileInputStream(p12File),config.getStorePassword(), config.getKeyPassword());
+                    is,config.getStorePassword(), config.getKeyPassword());
             byte[] root_key = entry[0];
-
+            is = IDPassReaderComponent.class.getClassLoader().getResourceAsStream(config.getP12File());
             entry = IDPassHelper.readKeyStoreEntry(
                     "intermedcertificatesprivatekeys",
-                    new FileInputStream(p12File),config.getStorePassword(), config.getKeyPassword());
+                    is,config.getStorePassword(), config.getKeyPassword());
             byte[] intermed_key = entry[0];
 
             byte[] verification_key = Arrays.copyOfRange(intermed_key, 32, 64);
