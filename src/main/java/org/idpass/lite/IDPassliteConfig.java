@@ -26,13 +26,13 @@ enum DetailField {
     DETAIL_GENDER(IDPassReader.DETAIL_GENDER),
     DETAIL_POSTALADDRESS(IDPassReader.DETAIL_POSTALADDRESS);
 
-    private int bitFlag;
+    private long bitFlag;
 
-    public int getBitFlag() {
+    public long getBitFlag() {
         return bitFlag;
     }
 
-    private DetailField(int value) {
+    private DetailField(long value) {
         bitFlag = value;
     }
 }
@@ -149,9 +149,9 @@ public class IDPassliteConfig {
      * generating the QR code.
      */
 
-    public int getVisibleFields() {
+    public long getVisibleFields() {
         List<DetailField> visibleFields = qrcode.getDetailsVisible();
-        int bitFlags = 0;
+        long bitFlags = 0;
 
         for (DetailField f : visibleFields) {
             bitFlags = bitFlags | f.getBitFlag();
