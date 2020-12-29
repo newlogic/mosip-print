@@ -20,6 +20,8 @@ import io.mosip.print.service.PrintRestClientService;
 import io.mosip.registration.print.core.http.RequestWrapper;
 import io.mosip.registration.print.core.http.ResponseWrapper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.idpass.lite.proto.Certificate;
 import org.api.proto.Certificates;
 import org.api.proto.Ident;
@@ -30,10 +32,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
+import javax.net.ssl.SSLContext;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +45,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -256,7 +262,17 @@ public class IDPassReaderComponent
         String jsonPayload = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
 
         //////////////
-        RestTemplate restTemplate = new RestTemplate();
+        SSLContext context = null;
+        try {
+            context = SSLContext.getInstance("TLSv1.2");
+            context.init(null, null, null);
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
+        CloseableHttpClient httpClient = HttpClientBuilder.create().setSSLContext(context)
+                .build();
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        RestTemplate restTemplate = new RestTemplate(factory);
         String uri = m_config.getEditorUrl();
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
         headers.add("Content-Type", MediaType.APPLICATION_JSON.toString());

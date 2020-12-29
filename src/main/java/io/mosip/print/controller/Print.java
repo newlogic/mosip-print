@@ -77,7 +77,7 @@ public class Print {
 		 */
 
 		LocalDateTime ldt = LocalDateTime.now();
-		String cardfile = m_config.getCardDir() + ldt.toString() + ".pdf";
+		String cardfile = m_config.getCardDir() + File.separator + ldt.toString().replace(":","_") + ".pdf";
 		OutputStream idCard = new FileOutputStream(new File(cardfile));
 		idCard.write(pdfbytes);
 
