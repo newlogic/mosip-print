@@ -1,9 +1,14 @@
 package io.mosip.print.controller;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.idpass.lite.IDPassliteConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -25,6 +30,9 @@ import io.mosip.print.util.CryptoCoreUtil;
 @RequestMapping(value = "/print")
 public class Print {
 
+	@Autowired
+	IDPassliteConfig m_config;
+
 	/** The printservice. */
 	@Autowired
 	private PrintService<Map<String, byte[]>> printService;
@@ -34,8 +42,6 @@ public class Print {
 
 	@Autowired
 	CryptoCoreUtil cryptoCoreUtil;
-
-
 
 	/**
 	 * Gets the file.
@@ -69,8 +75,13 @@ public class Print {
 		 * ); OutputStream os = new FileOutputStream(pdfFile); os.write(pdfbytes);
 		 * os.close();
 		 */
-		return new ResponseEntity<>("successfully printed", HttpStatus.OK);
 
+		LocalDateTime ldt = LocalDateTime.now();
+		String cardfile = m_config.getCardDir() + File.separator + ldt.toString().replace(":","_") + ".pdf";
+		OutputStream idCard = new FileOutputStream(new File(cardfile));
+		idCard.write(pdfbytes);
+
+		return new ResponseEntity<>("successfully printed", HttpStatus.OK);
 	}
 
 	private String getSignature(String sign, String crdential) {

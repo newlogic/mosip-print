@@ -3,6 +3,7 @@ package io.mosip.print;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -10,6 +11,7 @@ import io.mosip.kernel.cbeffutil.impl.CbeffImpl;
 import io.mosip.kernel.core.cbeffutil.spi.CbeffUtil;
 
 @SpringBootApplication
+@ComponentScan({"io.mosip.print", "org.idpass.lite"})
 public class PrintPDFApplication {
 
 	@Bean

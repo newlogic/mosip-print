@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.idpass.lite.IDPassReaderComponent;
+import org.idpass.lite.IDPassLiteDTO;
 import org.joda.time.DateTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,12 +43,10 @@ import io.mosip.kernel.core.exception.ExceptionUtils;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.pdfgenerator.exception.PDFGeneratorException;
 import io.mosip.kernel.core.qrcodegenerator.exception.QrcodeGenerationException;
-import io.mosip.kernel.core.qrcodegenerator.spi.QrCodeGenerator;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.kernel.core.websub.spi.PublisherClient;
 import io.mosip.kernel.pdfgenerator.itext.constant.PDFGeneratorExceptionCodeConstant;
-import io.mosip.kernel.qrcode.generator.zxing.constant.QrVersion;
 import io.mosip.print.constant.ApiName;
 import io.mosip.print.constant.CardType;
 import io.mosip.print.constant.EventId;
@@ -182,7 +182,7 @@ public class PrintServiceImpl implements PrintService{
 
 	/** The qr code generator. */
 	@Autowired
-	private QrCodeGenerator<QrVersion> qrCodeGenerator;
+	private IDPassReaderComponent idpassQrCodeGenerator;
 
 	/** The Constant INDIVIDUAL_BIOMETRICS. */
 	private static final String INDIVIDUAL_BIOMETRICS = "individualBiometrics";
@@ -248,6 +248,7 @@ public class PrintServiceImpl implements PrintService{
 		boolean isTransactionSuccessful = false;
 		IdResponseDTO1 response = null;
 		String template = UIN_CARD_TEMPLATE;
+
 		try {
 			/*
 			 * if(credentialType.equalsIgnoreCase("qrcode")) { setQrCode(sign, attributes);
@@ -271,7 +272,8 @@ public class PrintServiceImpl implements PrintService{
 			byte[] textFileByte = createTextFile(decryptedJson.toString());
 			byteMap.put(UIN_TEXT_FILE, textFileByte);
 
-			boolean isQRcodeSet = setQrCode(decryptedJson.toString(), attributes);
+			IDPassLiteDTO sd = setQrCode(decryptedJson.toString(), attributes, encryptionPin);
+			boolean isQRcodeSet = sd.isResult();
 			if (!isQRcodeSet) {
 				printLogger.debug(LoggerFileConstant.SESSIONID.toString(),
 						LoggerFileConstant.REGISTRATIONID.toString(), uin,
@@ -296,7 +298,7 @@ public class PrintServiceImpl implements PrintService{
 			}
 
 			// generating pdf
-			byte[] pdfbytes = uinCardGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password);
+			byte[] pdfbytes = idpassQrCodeGenerator.generateUinCard(uinArtifact, UinCardType.PDF, password, sd);
 			byteMap.put(UIN_CARD_PDF, pdfbytes);
 
 			byte[] uinbyte = attributes.get("UIN").toString().getBytes();
@@ -518,7 +520,7 @@ public class PrintServiceImpl implements PrintService{
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
-	private boolean setQrCode(String qrString, Map<String, Object> attributes)
+	private IDPassLiteDTO setQrCode(String qrString, Map<String, Object> attributes, String pincode)
 			throws QrcodeGenerationException, IOException {
 		boolean isQRCodeSet = false;
 		JSONObject qrJsonObj = JsonUtil.objectMapperReadValue(qrString, JSONObject.class);
@@ -529,14 +531,17 @@ public class PrintServiceImpl implements PrintService{
 		// textFileJson.put("digitalSignature", digitalSignaturedQrData);
 		// Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 		// String printTextFileString = gson.toJson(textFileJson);
-		byte[] qrCodeBytes = qrCodeGenerator.generateQrCode(qrJsonObj.toString(), QrVersion.V30);
+		String photob64 = (String)attributes.get("ApplicantPhoto");
+		IDPassLiteDTO sd = idpassQrCodeGenerator.generateQrCode(qrJsonObj.toString(), photob64, pincode);
+		byte[] qrCodeBytes = sd.getQrCodeBytes();
 		if (qrCodeBytes != null) {
 			String imageString = CryptoUtil.encodeBase64String(qrCodeBytes);
 			attributes.put(QRCODE, "data:image/png;base64," + imageString);
 			isQRCodeSet = true;
+			sd.setResult(isQRCodeSet);
 		}
 
-		return isQRCodeSet;
+		return sd;
 	}
 
 	/**
